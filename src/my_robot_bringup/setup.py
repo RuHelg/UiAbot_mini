@@ -12,15 +12,21 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/launch', ['launch/bringup.launch.py']),
-        ('share/' + package_name + '/config', ['config/ekf.yaml']),
+        # Install URDF and launch files so `ros2 launch <pkg> <file>` can find them
+        ('share/' + package_name + '/urdf', ['urdf/uiabot_mini.urdf']),
+        #('share/' + package_name + '/launch', ['launch/display.launch.py']),
+        # ('share/' + package_name + '/meshes', ['meshes/UiABOT.STL']),
+        ('share/' + package_name + '/meshes', [
+            'meshes/base_link.STL',
+            'meshes/wheel.STL']),        
+
     ],
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='gruppe-6',
     maintainer_email='gruppe-6@todo.todo',
     description='TODO: Package description',
-    license='TODO: License declaration',
+    license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [

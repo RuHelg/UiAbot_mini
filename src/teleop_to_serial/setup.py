@@ -21,6 +21,8 @@ setup(
     entry_points={
         'console_scripts': [
             'teleop_to_serial = teleop_to_serial.teleop_to_serial:main',
+            'wheel_state_publisher = teleop_to_serial.wheel_state_publisher:main',
+            'differential_drive_odometry = teleop_to_serial.differential_drive_odometry:main',
         ],
     },
 )

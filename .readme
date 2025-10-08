@@ -1,0 +1,3 @@
+cd /home/gruppe-6/ros2/ws
+source install/setup.bash
+ros2 launch my_robot_bringup bringup.launch.py
