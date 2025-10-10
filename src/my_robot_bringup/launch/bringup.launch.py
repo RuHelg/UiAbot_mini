@@ -69,7 +69,7 @@ def generate_launch_description():
         
         # Teleop to Serial Communication
         Node(
-            package='uiabot_mini_core',
+            package='teleop_to_serial',
             executable='teleop_to_serial',
             name='teleop_to_serial_node',
             output='screen',
@@ -85,7 +85,7 @@ def generate_launch_description():
         
         # Wheel State Publisher - Publishes joint_states for URDF
         Node(
-            package='uiabot_mini_core',
+            package='teleop_to_serial',
             executable='wheel_state_publisher',
             name='wheel_state_publisher_node',
             output='screen'

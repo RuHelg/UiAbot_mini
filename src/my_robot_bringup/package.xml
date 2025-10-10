@@ -17,7 +17,7 @@
   <depend>launch_ros</depend>
   <depend>robot_localization</depend>
   <depend>robot_state_publisher</depend>
-  <depend>uiabot_mini_core</depend>
+  <depend>teleop_to_serial</depend>
   <depend>rplidar_ros</depend>
   <depend>bno055</depend>
   <depend>xacro</depend>
