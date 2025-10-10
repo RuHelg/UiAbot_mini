@@ -10,6 +10,16 @@ def generate_launch_description():
     pkg_share = get_package_share_directory('my_robot_bringup')
     config = os.path.join(pkg_share, 'config', 'ekf.yaml')
     urdf_file = os.path.join(pkg_share, 'urdf', 'uiabot_mini.urdf')
+    robot_description = open(urdf_file, 'r', encoding='utf-8').read()
+
+    # config = os.path.join(
+    #     get_package_share_directory('my_robot_bringup'),
+    #     'config',
+    #     'ekf.yaml'
+    # )
+
+    # pkg_share = get_package_share_directory('my_robot_bringup')
+    # urdf_file = os.path.join(pkg_share, 'urdf', 'uiabot_mini.urdf')
 
     with open(urdf_file, 'r') as f:
         robot_description = f.read()
@@ -59,7 +69,7 @@ def generate_launch_description():
         
         # Teleop to Serial Communication
         Node(
-            package='teleop_to_serial',
+            package='uiabot_mini_core',
             executable='teleop_to_serial',
             name='teleop_to_serial_node',
             output='screen',
@@ -75,7 +85,7 @@ def generate_launch_description():
         
         # Wheel State Publisher - Publishes joint_states for URDF
         Node(
-            package='teleop_to_serial',
+            package='uiabot_mini_core',
             executable='wheel_state_publisher',
             name='wheel_state_publisher_node',
             output='screen'
@@ -106,7 +116,7 @@ def generate_launch_description():
             package='tf2_ros',
             executable='static_transform_publisher',
             name='base_to_laser_tf',
-            arguments=[str(laser_x), str(laser_y), str(laser_z), '0', '0', '0', 'base_link', 'laser'],
+            arguments=[str(laser_x), str(laser_y), str(laser_z), '1.5708', '0', '0', 'base_link', 'laser'],
             output='screen'
         ),
         
@@ -115,22 +125,22 @@ def generate_launch_description():
             package='tf2_ros',
             executable='static_transform_publisher',
             name='base_to_imu_tf', 
-            arguments=[str(imu_x), str(imu_y), str(imu_z), '0', '0', '0', 'base_link', 'bno055'],
+            arguments=[str(imu_x), str(imu_y), str(imu_z), '1.5708', '0', '0', 'base_link', 'bno055'],
             output='screen'
         ),
 
-        Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        name='robot_state_publisher',
-        output='screen',
-        parameters=[{'robot_description': robot_description}],
-        ),
+        # Node(
+        # package='robot_state_publisher',
+        # executable='robot_state_publisher',
+        # name='robot_state_publisher',
+        # output='screen',
+        # parameters=[{'robot_description': robot_description}],
+        # ),
 
-        Node(
-        package='joint_state_publisher_gui',
-        executable='joint_state_publisher_gui',
-        name='joint_state_publisher_gui',
-        output='screen',
-        )
+        # Node(
+        # package='joint_state_publisher_gui',
+        # executable='joint_state_publisher_gui',
+        # name='joint_state_publisher_gui',
+        # output='screen',
+        # )
     ])

@@ -8,16 +8,16 @@
   <license>Apache-2.0</license>
 
   <depend>rclpy</depend>
-  <exec_depend>launch</exec_depend>
+  <!-- <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
-  <exec_depend>xacro</exec_depend>
+  <exec_depend>xacro</exec_depend> -->
   
   <depend>launch</depend>
   <depend>launch_ros</depend>
   <depend>robot_localization</depend>
   <depend>robot_state_publisher</depend>
-  <depend>teleop_to_serial</depend>
+  <depend>uiabot_mini_core</depend>
   <depend>rplidar_ros</depend>
   <depend>bno055</depend>
   <depend>xacro</depend>

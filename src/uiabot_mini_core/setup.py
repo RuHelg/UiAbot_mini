@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'teleop_to_serial'
+package_name = 'uiabot_mini_core'
 
 setup(
     name=package_name,
@@ -20,9 +20,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'teleop_to_serial = teleop_to_serial.teleop_to_serial:main',
-            'wheel_state_publisher = teleop_to_serial.wheel_state_publisher:main',
-            'differential_drive_odometry = teleop_to_serial.differential_drive_odometry:main',
+            'teleop_to_serial = uiabot_mini_core.teleop_to_serial:main',
+            'wheel_state_publisher = uiabot_mini_core.wheel_state_publisher:main',
+            'differential_drive_odometry = uiabot_mini_core.differential_drive_odometry:main',
         ],
     },
 )

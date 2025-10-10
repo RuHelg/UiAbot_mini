@@ -9,16 +9,12 @@ setup(
     version='0.0.0',
     packages=find_packages(exclude=['test']),
     data_files=[
-        ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
+        ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        # Install URDF and launch files so `ros2 launch <pkg> <file>` can find them
         ('share/' + package_name + '/urdf', ['urdf/uiabot_mini.urdf']),
-        #('share/' + package_name + '/launch', ['launch/display.launch.py']),
-        # ('share/' + package_name + '/meshes', ['meshes/UiABOT.STL']),
-        ('share/' + package_name + '/meshes', [
-            'meshes/base_link.STL',
-            'meshes/wheel.STL']),        
+        ('share/' + package_name + '/launch', ['launch/bringup.launch.py']),
+        ('share/' + package_name + '/config', ['config/ekf.yaml']),
+        ('share/' + package_name + '/meshes', ['meshes/base_link.STL', 'meshes/wheel.STL']),
 
     ],
     install_requires=['setuptools'],
