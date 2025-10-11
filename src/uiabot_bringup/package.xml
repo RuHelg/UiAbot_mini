@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>uiabot_bringup</name>
+  <version>1.0.0</version>
+  <description>Launch files and configuration for UIABot Mini robot</description>
+  <maintainer email="gruppe-6@uia.no">Gruppe 6</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>robot_localization</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>rplidar_ros</exec_depend>
+  <exec_depend>bno055</exec_depend>
+  <exec_depend>serial_communication</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

@@ -1,52 +1,263 @@
-# UiABOT-ROS
+# UIABot Mini - ROS2 Workspace
 
+ROS2 Jazzy workspace for the UIABot Mini differential drive robot.
 
+## Overview
 
-## Getting started
+This workspace contains all software for the UIABot Mini autonomous mobile robot platform, including:
+- Robot model and TF configuration (URDF)
+- Sensor drivers (RPLidar A1, BNO055 IMU)
+- Motor control and serial communication
+- Sensor fusion with Extended Kalman Filter
+- Launch files and configuration
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Hardware
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- **Platform**: Differential drive robot
+- **Computer**: Running ROS2 Jazzy on Ubuntu 24.04
+- **LiDAR**: RPLidar A1 (USB, /dev/ttyUSB0)
+- **IMU**: BNO055 9-DOF (I2C)
+- **Motor Controller**: Serial communication (/dev/ttyUSB1)
 
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## Workspace Structure
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/mas514-a25/group6/uiabot-ros.git
-git branch -M main
-git push -uf origin main
+ws/
+├── src/
+│   ├── uiabot_bringup/       # Main launch package (⭐ START HERE)
+│   │   ├── launch/           # Launch files
+│   │   ├── config/           # Configuration files (EKF, etc.)
+│   │   └── urdf/             # Robot model
+│   ├── bno055/               # BNO055 IMU driver
+│   ├── rplidar_ros/          # RPLidar A1 driver
+│   └── serial_communication/ # Custom motor control package
+├── build/                    # Build artifacts (gitignored)
+├── install/                  # Installation outputs
+└── log/                      # Build and runtime logs
 ```
 
-## Integrate with your tools
+## Quick Start
 
-- [ ] [Set up project integrations](https://gitlab.com/mas514-a25/group6/uiabot-ros/-/settings/integrations)
+### 1. Build the Workspace
 
-## Collaborate with your team
+```bash
+cd ~/ros2/ws
+colcon build
+source install/setup.bash
+```
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+### 2. Launch the Robot
 
-## Test and Deploy
+```bash
+ros2 launch uiabot_bringup bringup.launch.py
+```
 
-Use the built-in continuous integration in GitLab.
+This starts:
+- Robot state publisher (URDF transforms)
+- EKF sensor fusion (IMU orientation)
+- Motor control node (serial communication)
+- Wheel state publisher (joint states)
+- RPLidar A1 driver
+- BNO055 IMU driver
+- Static transform publishers
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+### 3. Control the Robot
 
-***
+```bash
+# Keyboard teleop
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
-# Editing this README
+# Or publish directly to cmd_vel
+ros2 topic pub /cmd_vel geometry_msgs/Twist "linear: {x: 0.2}"
+```
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+### 4. Visualize in RViz2
+
+```bash
+rviz2
+```
+
+Add displays for:
+- RobotModel
+- TF
+- LaserScan (topic: `/scan`)
+- Odometry (topic: `/odometry/filtered`)
+
+## Packages
+
+## Packages
+
+### uiabot_bringup 🚀
+Main launch package containing robot configuration and bringup files.
+- **Location**: `src/uiabot_bringup/`
+- **Type**: Launch package (ament_cmake)
+- **Purpose**: System integration and launch orchestration
+- [Package README](src/uiabot_bringup/README.md)
+
+### serial_communication
+Custom package for motor control via serial interface.
+- **Location**: `src/serial_communication/`
+- **Type**: Python package
+- **Nodes**: 
+  - `teleop_to_serial` - Converts cmd_vel to motor commands
+  - `wheel_state_publisher` - Publishes joint states from wheel velocities
+
+### bno055
+BNO055 9-DOF IMU sensor driver (I2C).
+- **Location**: `src/bno055/`
+- **Type**: Python package
+- **Topics**: `/bno055/imu` (sensor_msgs/Imu)
+
+### rplidar_ros
+RPLidar A1 360° LiDAR sensor driver.
+- **Location**: `src/rplidar_ros/`
+- **Type**: C++ package (ament_cmake)
+- **Topics**: `/scan` (sensor_msgs/LaserScan)
+
+## Topics
+
+| Topic | Type | Description |
+|-------|------|-------------|
+| `/cmd_vel` | geometry_msgs/Twist | Velocity commands |
+| `/scan` | sensor_msgs/LaserScan | LiDAR scan data |
+| `/bno055/imu` | sensor_msgs/Imu | IMU measurements |
+| `/joint_states` | sensor_msgs/JointState | Wheel joint positions |
+| `/odometry/filtered` | nav_msgs/Odometry | EKF fused odometry |
+| `/wheel_r`, `/wheel_l` | std_msgs/Float32 | Individual wheel velocities |
+
+## TF Tree
+
+```
+map (EKF publishes map→base_link transform)
+ └─ base_link (Robot base frame with IMU absolute orientation)
+     ├─ wheel_left_link (URDF continuous joint)
+     ├─ wheel_right_link (URDF continuous joint)
+     ├─ laser (static transform: 49.66mm, 0, 166.5mm)
+     └─ bno055 (URDF fixed joint: 71.75mm, 58.75mm, 110.35mm, 180° yaw)
+```
+
+**Note**: This robot does not use an `odom` frame since it lacks wheel odometry. The EKF publishes directly from `map` to `base_link` using absolute IMU orientation.
+
+## Configuration
+
+### Robot Dimensions
+- **Laser Position**: (49.66mm, 0, 166.5mm) from base_link
+- **IMU Position**: (71.75mm, 58.75mm, 110.35mm) from base_link with 180° Z rotation
+- **Wheel Separation**: 197.5mm (center to center)
+
+### EKF Configuration
+Located in `src/uiabot_bringup/config/ekf.yaml`:
+- **Frequency**: 30 Hz
+- **Frame Configuration**: Publishes `map` → `base_link` directly (no odom frame)
+- **Inputs**: IMU absolute orientation (roll, pitch, yaw) only
+- **Disabled**: Linear acceleration and angular velocity integration (to prevent drift)
+- **IMU Variance**: High trust in orientation (0.001 for all axes)
+- **Output**: Fused odometry on `/odometry/filtered`
+
+## Development
+
+### Building Specific Packages
+
+```bash
+# Build only the bringup package
+colcon build --packages-select uiabot_bringup
+
+# Build with dependencies
+colcon build --packages-up-to uiabot_bringup
+```
+
+### Debugging
+
+```bash
+# Check TF tree
+ros2 run tf2_tools view_frames
+
+# Monitor topics
+ros2 topic list
+ros2 topic echo /bno055/imu
+
+# Check node info
+ros2 node list
+ros2 node info /ekf_filter_node
+```
+
+## Troubleshooting
+
+### IMU Calibration
+The BNO055 IMU requires calibration on first use. Check calibration status:
+```bash
+ros2 topic echo /bno055/calib_status
+```
+
+Calibration levels (0-3, where 3 is fully calibrated):
+- **sys**: System calibration
+- **gyro**: Gyroscope calibration (wave sensor in air)
+- **accel**: Accelerometer calibration (place in 6 orientations)
+- **mag**: Magnetometer calibration (move in figure-8 pattern)
+
+**Target**: gyro=3, accel=3, mag=3 for best performance.
+
+Calibration offsets are saved in `src/bno055/bno055/params/bno055_params_i2c.yaml` and persist across restarts.
+
+### Expected IMU Behavior
+- **Drift**: Some yaw drift over time is normal without wheel odometry
+- **Orientation**: Roll and pitch should be stable when stationary
+- **RViz2**: Use `map` as the fixed frame for proper visualization
+
+### Serial Port Permissions
+```bash
+sudo usermod -aG dialout $USER
+# Log out and back in
+```
+
+### USB Device Detection
+```bash
+# Check if devices are detected
+ls -l /dev/ttyUSB*
+
+# Should show:
+# /dev/ttyUSB0 (RPLidar)
+# /dev/ttyUSB1 (Motor controller)
+```
+
+### I2C IMU Connection
+```bash
+# Check I2C devices
+sudo i2cdetect -y 1
+
+# Should show BNO055 at address 0x28
+```
+
+## Dependencies
+
+- ROS2 Jazzy
+- Python 3.12
+- `robot_state_publisher`
+- `robot_localization`
+- `tf2_ros`
+- `ament_cmake`
+- `pyserial`
+
+## Git Repository
+
+- **Host**: GitLab
+- **Group**: mas514-a25/group6
+- **Project**: uiabot-ros
+
+## Team
+
+Gruppe 6 - MAS514 Autumn 2025
+University of Agder (UiA)
+
+## License
+
+MIT
+
+---
+
+**Status**: ✅ Production Ready
+
+For detailed package documentation, see [uiabot_bringup/README.md](src/uiabot_bringup/README.md)
 
 ## Suggestions for a good README
 
