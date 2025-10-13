@@ -14,15 +14,6 @@ def generate_launch_description():
     
     with open(urdf_file, 'r', encoding='utf-8') as f:
         robot_description = f.read()
-    
-    # ========================================
-    # Robot Frame Positions (in meters)
-    # ========================================
-    # Laser (RPLidar A1)
-    laser_x = 49.66e-3
-    laser_y = 0.0
-    laser_z = 166.5e-3
-
 
     return LaunchDescription([
         # Robot State Publisher - Publishes robot model from URDF
@@ -81,13 +72,13 @@ def generate_launch_description():
             ])
         ),
         
-        # Static Transform Publishers for TF tree
-        # Transform from base_link to laser frame (RPLidar)
+        # Static world frame - Fixed reference point for mapping
+        # world is the absolute fixed frame, map will be published by SLAM relative to world
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
-            name='base_to_laser_tf',
-            arguments=[str(laser_x), str(laser_y), str(laser_z), '1.5708', '0', '0', 'base_link', 'laser'],
+            name='world_to_map_publisher',
+            arguments=['0', '0', '0', '0', '0', '0', 'world', 'map'],
             output='screen'
         ),
 
