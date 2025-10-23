@@ -27,6 +27,14 @@ def generate_launch_description():
                 'use_sim_time': False
             }]
         ),
+
+        # Custom odometry node (keep node code as-is; set launch name to "odometry")
+        Node(
+            package='serial_communication',
+            executable='robot_state_publisher',  # <-- change to your package executable name if different
+            name='odometry',
+            output='screen'
+        ),
         
         # Robot Localization (EKF) - Fuses IMU data for orientation
         Node(
