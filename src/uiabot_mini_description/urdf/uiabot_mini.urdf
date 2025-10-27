@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<robot name="uiabot_mini">
+
+  <!-- <link name="world_frame"/> -->
+
+  <!-- ========= Base ========= -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://uiabot_mini_description/meshes/base_link.STL"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="light_gray">
+        <color rgba="0.6 0.6 0.6 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- <joint name="world_to_base" type="fixed">
+    <parent link="world_frame"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0.05635" rpy="0 0 0"/>
+  </joint> -->
+
+  <!-- ========= Left Wheel ========= -->
+  <link name="wheel_l_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://uiabot_mini_description/meshes/wheel.STL"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="dark_gray">
+        <color rgba="0.2 0.2 0.2 1"/>
+      </material>
+    </visual>
+  </link>
+
+  <joint name="wheel_l_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="wheel_l_link"/>
+    <origin xyz="0.00060024 0.09875 0.0339981720062555" rpy="-1.5707963267949 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <!-- ========= Right Wheel ========= -->
+  <link name="wheel_r_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://uiabot_mini_description/meshes/wheel.STL"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="3.14159265358979 0 0"/>
+      <material name="dark_gray">
+        <color rgba="0.2 0.2 0.2 1"/>
+      </material>
+    </visual>
+  </link>
+
+  <joint name="wheel_r_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="wheel_r_link"/>
+    <origin xyz="0.00060024 -0.09875  0.0339981720062555 " rpy="-1.5707963267949 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <!-- ========= IMU (BNO055) ========= -->
+  <link name="bno055"/>
+
+  <joint name="imu_fixed_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="bno055"/>
+    <origin xyz="-71.75e-3 -58.75e-3 110.35e-3" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ========= LIDAR (RPLidar A1) ========= -->
+  <link name="lidar_link"/>
+
+  <joint name="lidar_fixed_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="lidar_link"/>
+    <origin xyz="-0.04966 0 0.1665" rpy="0 0 0"/>
+  </joint>
+
+</robot>
