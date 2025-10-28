@@ -1,3 +1,12 @@
-cd /home/gruppe-6/ros2/ws
-source install/setup.bash
-ros2 launch my_robot_bringup bringup.launch.py
+colcon build --parallel-workers 4 --packages-skip robot_localization   &&
+colcon build --packages-select robot_localization --parallel-workers 1 &&
+
+cd /home/gruppe-6/ros2/ws && 
+source install/setup.bash &&
+ros2 launch uiabot_mini_bringup bringup.launch.py
+
+for
+
+
+colcon build 
+

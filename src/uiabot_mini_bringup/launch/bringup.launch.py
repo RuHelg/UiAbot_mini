@@ -1,7 +1,9 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from ament_index_python.packages import get_package_share_directory
 import os
 
@@ -50,17 +52,6 @@ def generate_launch_description():
         package='uiabot_mini_core',
         executable='wheel_encoder_odometry',
         name='wheel_encoder_odometry',
-        # parameters=[{
-        #     'wheel_radius': 0.033,
-        #     'wheel_separation': 0.1975,
-        #     'odom_frame': 'odom',       # must match RViz Fixed Frame parent for robot model
-        #     'base_frame': 'base_link',  # must match URDF robot base link name
-        #     'left_vel_topic': 'wheel_l/velocity',
-        #     'right_vel_topic': 'wheel_r/velocity',
-        #     'odom_topic': '/wheel_encoder_odometry',
-        #     'publish_tf': True,
-        #     'rate_hz': 50.0
-        # }],
         output='screen'
     )
 
@@ -70,21 +61,82 @@ def generate_launch_description():
         'config', 'slam_params.yaml'
     )
 
-    slam_node = Node(
-        package='slam_toolbox',
-        executable='async_slam_toolbox_node',
-        name='slam_toolbox',
-        output='screen',
-        parameters=[slam_params]
+    # Declare a launch argument to enable/disable SLAM include
+    run_slam_arg = DeclareLaunchArgument(
+        'run_slam',
+        default_value='false',
+        description='If true, include SLAM Toolbox launch'
+    )
+    
+    run_nav_arg = DeclareLaunchArgument(
+        'run_nav',
+        default_value='false',
+        description='If true, include Nav2 navigation stack'
+    )
+    
+    map_file_arg = DeclareLaunchArgument(
+        'map',
+        default_value='',
+        description='Full path to map yaml file for Nav2 localization'
     )
 
+    run_slam = LaunchConfiguration('run_slam')
+    run_nav = LaunchConfiguration('run_nav')
+    map_file = LaunchConfiguration('map')
+
+    # Use SLAM Toolbox's built-in launch file with autostart
+    slam_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
+        ),
+        launch_arguments={
+            'slam_params_file': slam_params,
+            'use_sim_time': 'false'
+        }.items()
+        ,
+        # Explicitly check for the literal string 'true' so run_slam:=false is not truthy
+        # Wrap the substitution in quotes so unquoted tokens (e.g. true) don't become
+        # bare Python names (which would raise NameError). This produces e.g. "'true' == 'true'".
+        condition=IfCondition(PythonExpression(["'", run_slam, "' == 'true'"]))
+    )
+
+    # Nav2 navigation stack (using bringup which includes map server + localization + navigation)
+    nav2_params = os.path.join(
+        get_package_share_directory('uiabot_mini_bringup'),
+        'config', 'nav2_params.yaml'
+    )
+    
+    nav2_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'bringup_launch.py')
+        ),
+        launch_arguments={
+            'params_file': nav2_params,
+            'map': map_file,
+            'use_sim_time': 'false',
+            'autostart': 'true'
+        }.items(),
+        condition=IfCondition(PythonExpression(["'", run_nav, "' == 'true'"]))
+    )
+
+    ekf_params = os.path.join(
+        get_package_share_directory('uiabot_mini_bringup'),
+        'config', 'ekf.yaml'
+    )
     ekf_node = Node(
         package='robot_localization',
         executable='ekf_node',
         name='ekf_filter_node',
-        parameters=['/home/gruppe-6/ros2/ws2/src/uiabot_mini_bringup/config/ekf.yaml'],
-        # parameters=[os.path.join(get_package_share_directory('uiabot_mini_bringup'),'config','ekf.yaml')],
-        output='screen'
+        parameters=[ekf_params],
+        output='screen',
+        remappings=[('odometry/filtered', '/odometry/filtered')]
     )
 
-    return LaunchDescription([rsp, tts, wjsp, rplidar_launch, bno055_launch, we_odom, slam_node, ekf_node])
+    return LaunchDescription([
+        run_slam_arg,
+        run_nav_arg,
+        map_file_arg,
+        rsp, tts, wjsp, rplidar_launch, bno055_launch, we_odom, ekf_node, slam_launch, nav2_launch
+    ])
+
+
