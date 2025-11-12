@@ -2,13 +2,17 @@ slam_toolbox:
   ros__parameters:
     # ROS Parameters
     use_sim_time: false
-    mode: mapping
+    mode: mapping  # <-- change from 'mapping' to load saved map
+    # or use "mapping" if you want to load a map and detect new obstacles:
+    # mode: mapping
     
-    # Frame IDs
-    odom_frame: odom
+    # map frame setup
     map_frame: map
+    odom_frame: odom
     base_frame: base_link
     scan_topic: /scan
+    # ADD THIS if your odometry topic is named differently:
+    # If you're remapping topics in the launch file, ensure it's consistent
     
     # Plugin params
     solver_plugin: solver_plugins::CeresSolver
@@ -64,7 +68,6 @@ slam_toolbox:
     minimum_angle_penalty: 0.9
     minimum_distance_penalty: 0.5
     use_response_expansion: true
-
-    # Map saving
-    map_file_name: /home/gruppe-6/ros2/ws/src/maps/slam_map
-    map_start_at_dock: true
+    
+    # Increase queue size and buffer
+    scan_queue_size: 30  # <-- add this (default is often 10)
