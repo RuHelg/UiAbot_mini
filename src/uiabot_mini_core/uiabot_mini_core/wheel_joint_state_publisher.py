@@ -21,7 +21,7 @@ class WheelJointStatePublisher(Node):
 
         self.sub_l = self.create_subscription(Float32, 'wheel_l/velocity', self.cb_l, qos_profile_sensor_data)
         self.sub_r = self.create_subscription(Float32, 'wheel_r/velocity', self.cb_r, qos_profile_sensor_data)
-        self.pub_js = self.create_publisher(JointState, 'joint_states', 10)
+        self.pub_js = self.create_publisher(JointState, 'joint_states', 20)
 
         self.timer = self.create_timer(0.02, self.tick)  # 50 Hz
 

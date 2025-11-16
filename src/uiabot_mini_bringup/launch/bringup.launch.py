@@ -1,9 +1,9 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, GroupAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration
+from launch.conditions import IfCondition, UnlessCondition
+from launch.substitutions import LaunchConfiguration, AndSubstitution, NotSubstitution
 from ament_index_python.packages import get_package_share_directory
 import os
 
@@ -11,11 +11,15 @@ def generate_launch_description():
     # Launch arguments
     run_slam = LaunchConfiguration('run_slam')
     run_nav = LaunchConfiguration('run_nav')
-    map_file = LaunchConfiguration('map')
+    map_file = LaunchConfiguration('map')  # Only used when run_slam=false and run_nav=true
     
     run_slam_arg = DeclareLaunchArgument('run_slam', default_value='false')
     run_nav_arg = DeclareLaunchArgument('run_nav', default_value='false')
-    map_file_arg = DeclareLaunchArgument('map', default_value='/home/gruppe-6/ros2/ws/src/maps/Datalab.yaml')
+    map_file_arg = DeclareLaunchArgument(
+        'map', 
+        default_value='/home/gruppe-6/ros2/ws/src/maps/Datalab.yaml',
+        description='Path to map file (only used when run_slam=false and run_nav=true)'
+    )
 
     # URDF
     desc_pkg = get_package_share_directory('uiabot_mini_description')
@@ -47,7 +51,12 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('rplidar_ros'), 'launch', 'rplidar_a1_launch.py')
         ),
-        launch_arguments={'serial_port': '/dev/ttyUSB0', 'frame_id': 'lidar_link'}.items()
+        launch_arguments={
+            'serial_port': '/dev/ttyUSB0', 
+            'frame_id': 'lidar_link',
+            'angle_compensate': 'true',
+            'scan_mode': 'Standard'
+        }.items()
     )
 
     bno055_launch = IncludeLaunchDescription(
@@ -86,9 +95,13 @@ def generate_launch_description():
         condition=IfCondition(run_slam)
     )
 
-    # Nav2 (use bringup launch that includes map_server and amcl)
+    # Nav2 - Two modes:
+    # 1. With localization (map_server + AMCL): use when run_slam=false
+    # 2. Without localization: use when run_slam=true (SLAM provides map->odom)
     nav2_params = os.path.join(get_package_share_directory('uiabot_mini_bringup'), 'config', 'nav2_params.yaml')
-    nav2_launch = IncludeLaunchDescription(
+    
+    # Mode 1: Full Nav2 with map_server and AMCL (for pre-mapped environments)
+    nav2_with_localization = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'bringup_launch.py')
         ),
@@ -98,19 +111,32 @@ def generate_launch_description():
             'use_sim_time': 'false',
             'autostart': 'true'
         }.items(),
-        condition=IfCondition(run_nav)
+        condition=IfCondition(AndSubstitution(run_nav, NotSubstitution(run_slam)))
+    )
+    
+    # Mode 2: Nav2 without localization (for SLAM mode - only navigation stack)
+    nav2_without_localization = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'navigation_launch.py')
+        ),
+        launch_arguments={
+            'params_file': nav2_params,
+            'use_sim_time': 'false',
+            'autostart': 'true'
+        }.items(),
+        condition=IfCondition(AndSubstitution(run_nav, run_slam))
     )
 
 
-    # Static TF: map -> odom (use when not running AMCL)
-    map_to_odom_tf = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='map_to_odom_publisher',
-        arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
-        output='screen',
-        condition=IfCondition(LaunchConfiguration('use_static_map_tf', default='false'))
-    )
+    # # Static TF: map -> odom (use when not running AMCL)
+    # map_to_odom_tf = Node(
+    #     package='tf2_ros',
+    #     executable='static_transform_publisher',
+    #     name='map_to_odom_publisher',
+    #     arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
+    #     output='screen',
+    #     condition=IfCondition(LaunchConfiguration('use_static_map_tf', default='false'))
+    # )
 
     return LaunchDescription([
         run_slam_arg,
@@ -123,7 +149,8 @@ def generate_launch_description():
         bno055_launch,
         we_odom,
         ekf_node,
-        map_to_odom_tf,  # <-- add this
+        #map_to_odom_tf,  # <-- add this
         slam_launch,
-        nav2_launch
+        nav2_with_localization,
+        nav2_without_localization
     ])

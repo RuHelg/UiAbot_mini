@@ -3,29 +3,37 @@ colcon build --packages-select robot_localization --parallel-workers 1 &&
 
 cd /home/gruppe-6/ros2/ws && 
 source install/setup.bash &&
-ros2 launch uiabot_mini_bringup bringup.launch.py
-
-for nav 
-ros2 launch uiabot_mini_bringup bringup.launch.py run_nav:=true
-
-for slam
-ros2 launch uiabot_mini_bringup bringup.launch.py run_slam:=true
+ros2 launch uiabot_mini_bringup bringup.launch.py run_slam:=false run_nav:=true 
 
 
-colcon build 
+
+#SLAM only
+ros2 launch uiabot_mini_bringup bringup.launch.py run_slam:=true run_nav:=false
+
+#nav2 only
+ros2 launch uiabot_mini_bringup bringup.launch.py run_slam:=false run_nav:=true 
+
+#slam + nav2 new map
+ros2 launch uiabot_mini_bringup bringup.launch.py run_slam:=true run_nav:=true
+
+
 
 ros2 run tf2_tools view_frames
 
 #1 terminal
-ros2 launch nav2_bringup navigation_launch.py
+ros2 launch nav2_bringup navigation_launch.py nav2_params_file:=src/uiabot_mini_bringup/config/nav2_params.yaml
 #2 terminal
-ros2 launch slam_toolbox online_async_launch.py
+os2 launch slam_toolbox online_async_launch.py slam_params:=src/uiabot_mini_bringup/config/slam_params.yaml
+
+#AMCL test
+ros2 launch nav2_bringup localization_launch.py map:=src/maps/Datalab.yaml use_sim_time:=false
 
 # Run SLAM only (map building)
 ros2 launch uiabot_mini_bringup bringup.launch.py
 
 # Run SLAM + Nav2 with saved map (live mapping + navigation)
 ros2 launch uiabot_mini_bringup bringup.launch.py run_nav:=true
+
 
 
 

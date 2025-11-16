@@ -27,7 +27,8 @@ class TeleopToSerial(Node):
             self.ser = None
             exit(1)
 
-        self.timer = self.create_timer(0.1, self.read_data)
+        # Increased from 0.1 (10 Hz) to 0.05 (20 Hz) for smoother feedback and responsiveness
+        self.timer = self.create_timer(0.05, self.read_data)
 
     def cmd_vel_callback(self, msg):
         linear_velocity_x = msg.linear.x
@@ -54,7 +55,8 @@ class TeleopToSerial(Node):
             #self.get_logger().info(
             #    f"Sent values: lin.x={linear_velocity_x}, ang.z={angular_velocity_z}"
             #)
-            sleep(0.01)
+            # Removed blocking sleep(0.01) to prevent ROS 2 executor thread blocking
+            # Serial writes are non-blocking and fast; no need to sleep here
 
         except serial.SerialException as e:
             self.get_logger().error(f"Failed to send values: {e}")
