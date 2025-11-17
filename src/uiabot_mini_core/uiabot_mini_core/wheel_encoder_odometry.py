@@ -26,7 +26,7 @@ class WheelEncoderOdometry(Node):
         super().__init__('wheel_encoder_odometry')
 
         # Declare parameters
-        self.declare_parameter('wheel_radius', 0.033)        # m
+        self.declare_parameter('wheel_radius', 0.034)        # m
         self.declare_parameter('wheel_separation', 0.1975)   # m
         self.declare_parameter('odom_frame', 'odom')
         self.declare_parameter('base_frame', 'base_link')
