@@ -1,15 +1,16 @@
 amcl:
   ros__parameters:
     FollowPath:
-      plugin: "nav2_regulated_pure_pursuit_controller/RegulatedPurePursuitController"
-      allow_reversing: true
-      use_rotate_to_heading: true
-      rotate_to_heading_min_angle: 0.4      # rad, try 0.2–0.6
-      rotate_to_heading_angular_vel: 1.0    # rad/s
-      min_approach_linear_velocity: 0.05    # don’t force stop too early
-      lookahead_dist: 0.5                    # tune; too small can oscillate
-      regulated_linear_scaling_min_radius: 0.6
-      regulated_linear_scaling_min_speed: 0.05    
+      # plugin: "nav2_regulated_pure_pursuit_controller/RegulatedPurePursuitController"
+      # allow_reversing: true
+      # use_rotate_to_heading: true
+      # rotate_to_heading_min_angle: 0.4      # rad, try 0.2–0.6
+      # rotate_to_heading_angular_vel: 1.0    # rad/s
+      # min_approach_linear_velocity: 0.05    # don’t force stop too early
+      # lookahead_dist: 0.5                    # tune; too small can oscillate
+      # regulated_linear_scaling_min_radius: 
+      0.6
+      # regulated_linear_scaling_min_speed: 0.05    
     use_sim_time: False
     alpha1: 0.2
     alpha2: 0.2
@@ -66,20 +67,42 @@ bt_navigator:
 
 controller_server:
   ros__parameters:
-    use_sim_time: False
-    controller_frequency: 20.0     # <-- add this
-    control_loop_rate: 20.0        # <-- keep this
+    controller_frequency: 20.0
     min_x_velocity_threshold: 0.001
-    min_y_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.001
-    progress_checker_plugin: "progress_checker"
-    goal_checker_plugins: ["general_goal_checker"]
+    progress_checker_plugins: ["progress_checker"] # progress_checker_plugin: "progress_checker" For Humble and older
+    goal_checker_plugins: ["goal_checker"]
     controller_plugins: ["FollowPath"]
 
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.3
-      movement_time_allowance: 5.0
+      required_movement_radius: 0.5
+      movement_time_allowance: 10.0
+    goal_checker:
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 0.25
+      yaw_goal_tolerance: 0.25
+      stateful: True
+    FollowPath:
+      plugin: nav2_graceful_controller::GracefulController
+      transform_tolerance: 0.1
+      min_lookahead: 0.25
+      max_lookahead: 1.0
+      initial_rotation: true
+      initial_rotation_threshold: 0.75
+      prefer_final_rotation: true
+      allow_backward: True
+      k_phi: 2.0
+      k_delta: 1.0
+      beta: 0.4
+      lambda: 2.0
+      v_linear_min: 0.05
+      v_linear_max: 0.3
+      v_angular_max: 2.0
+      v_angular_min_in_place: 0.25
+      slowdown_radius: 0.5
+
     
     general_goal_checker:
       stateful: True
@@ -87,46 +110,7 @@ controller_server:
       xy_goal_tolerance: 0.25
       yaw_goal_tolerance: 0.25
     
-    FollowPath:
-      plugin: "dwb_core::DWBLocalPlanner"
-      min_vel_x: -0.3
-      min_vel_y: 0.0
-      max_vel_x: 0.3
-      max_vel_y: 0.0
-      max_vel_theta: 1.0
-      min_speed_xy: -0.3
-      max_speed_xy: 0.3
-      min_speed_theta: 0.0
-      acc_lim_x: 2.5         # Matches robot capabilities and velocity_smoother
-      acc_lim_y: 0.0
-      acc_lim_theta: 3.2     # Matches robot capabilities and velocity_smoother
-      decel_lim_x: -2.5
-      decel_lim_y: 0.0
-      decel_lim_theta: -3.2
-      vx_samples: 20
-      vy_samples: 0
-      vtheta_samples: 40
-      #changes, time to simulate ahead by (seconds)
-      sim_time: 0.8
-      linear_granularity: 0.05
-      angular_granularity: 0.025
-      transform_tolerance: 1.0
-      xy_goal_tolerance: 0.25
-      trans_stopped_velocity: 0.05
-      short_circuit_trajectory_evaluation: True
-      stateful: True
-      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
-      BaseObstacle.scale: 2.0   # Must be higher than path critics to prioritize obstacle avoidance
-      PathAlign.scale: 32.0
-      PathAlign.forward_point_distance: 0.1
-      GoalAlign.scale: 24.0
-      GoalAlign.forward_point_distance: 0.1
-      PathDist.scale: 32.0
-      GoalDist.scale: 24.0
-      RotateToGoal.scale: 32.0
-      RotateToGoal.slowing_factor: 5.0
-      RotateToGoal.lookahead_time: -1.0
-
+    
 local_costmap:
   local_costmap:
     ros__parameters:
@@ -154,7 +138,7 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 5.0
-        inflation_radius: 0.25
+        inflation_radius: 0.35
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -171,7 +155,7 @@ local_costmap:
           clearing: True
           marking: True
           data_type: "LaserScan"
-          raytrace_max_range: 3.0
+          raytrace_max_range: 5.0 #  <-- was 3.0
           raytrace_min_range: 0.15
           obstacle_max_range: 2.5
           obstacle_min_range: 0.15
@@ -200,16 +184,16 @@ global_costmap:
           marking: True
           data_type: "LaserScan"
           raytrace_max_range: 3.0
-          raytrace_min_range: 0.15
+          raytrace_min_range: 0.20
           obstacle_max_range: 2.5
-          obstacle_min_range: 0.15
+          obstacle_min_range: 0.25
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 1.0
-        inflation_radius: 0.05
+        inflation_radius: 0.3
       always_send_full_costmap: True
 
 planner_server:
@@ -319,11 +303,12 @@ collision_monitor:
       polygon_pub_topic: "polygon_stop"
     PolygonSlow:
       type: "circle"
-      radius: 0.4
+      radius: 0.5
       # points: "[[0.6, 0.4], [0.6, -0.4], [0.0, -0.4], [0.0, 0.4]]"
       action_type: "slowdown"
       min_points: 4  # max_points: 3 for Humble
-      slowdown_ratio: 0.3
+      slowdown_ratio: 1.0
+      
       visualize: True
       polygon_pub_topic: "polygon_slowdown"
     # polygons: ["VelocityPolygonStop"]

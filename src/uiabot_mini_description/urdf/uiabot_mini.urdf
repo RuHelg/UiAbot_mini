@@ -68,13 +68,13 @@
   </joint>
 
   <!-- ========= Base Footprint ========= -->
-  <link name="base_footprint"/>
-
-  <joint name="base_footprint_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="base_footprint"/>
-    <origin xyz="0 0 0.05" rpy="0 0 0"/>
-  </joint>
+  <!-- <link name="base_footprint"/> -->
+<!--  -->
+  <!-- <joint name="base_footprint_joint" type="fixed"> -->
+    <!-- <parent link="base_link"/> -->
+    <!-- <child link="base_footprint"/> -->
+    <!-- <origin xyz="0 0 0.05" rpy="0 0 0"/> -->
+  <!-- </joint> -->
 
   <!-- ========= Base ========= -->
   <link name="base_link">
