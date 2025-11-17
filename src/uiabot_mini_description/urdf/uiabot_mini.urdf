@@ -1,14 +1,19 @@
 <?xml version="1.0"?>
 <robot name="uiabot_mini">
 
-  <!-- <link name="world_frame"/> -->
-
-  <!-- <joint name="world_to_base" type="fixed">
-    <parent link="world_frame"/>
-    <child link="base_link"/>
-    <origin xyz="0 0 0.05635" rpy="0 0 0"/>
-  </joint> -->
-
+  <!-- ========= Base ========= -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://uiabot_mini_description/meshes/base_link.STL"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="light_gray">
+        <color rgba="0.6 0.6 0.6 1.0"/>
+      </material>
+    </visual>
+  </link>
+ 
   <!-- ========= Left Wheel ========= -->
   <link name="wheel_l_link">
     <visual>
@@ -58,35 +63,13 @@
     <origin xyz="-71.75e-3 -58.75e-3 110.35e-3" rpy="0 0 0"/>
   </joint>
 
-  <!-- ========= LIDAR (RPLidar A1) ========= -->
+  <!-- ========= LIDAR (RPLidar) ========= -->
   <link name="lidar_link"/>
 
   <joint name="lidar_fixed_joint" type="fixed">
     <parent link="base_link"/>
     <child link="lidar_link"/>
-    <origin xyz="0 0 0.15" rpy="0 0 3.14159265358979"/>  <!-- adjust xyz to your lidar mount position -->
+    <origin xyz="0 0 0.15" rpy="0 0 3.14159265358979"/>
   </joint>
-
-  <!-- ========= Base Footprint ========= -->
-  <!-- <link name="base_footprint"/> -->
-<!--  -->
-  <!-- <joint name="base_footprint_joint" type="fixed"> -->
-    <!-- <parent link="base_link"/> -->
-    <!-- <child link="base_footprint"/> -->
-    <!-- <origin xyz="0 0 0.05" rpy="0 0 0"/> -->
-  <!-- </joint> -->
-
-  <!-- ========= Base ========= -->
-  <link name="base_link">
-    <visual>
-      <geometry>
-        <mesh filename="package://uiabot_mini_description/meshes/base_link.STL"/>
-      </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <material name="light_gray">
-        <color rgba="0.6 0.6 0.6 1.0"/>
-      </material>
-    </visual>
-  </link>
 
 </robot>

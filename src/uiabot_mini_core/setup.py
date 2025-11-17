@@ -7,8 +7,7 @@ setup(
     version='0.0.0',
     packages=find_packages(exclude=['test']),
     data_files=[
-        ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
+        ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
     install_requires=['setuptools'],
@@ -20,8 +19,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'teleop_to_serial = uiabot_mini_core.teleop_to_serial:main',
             'wheel_joint_state_publisher = uiabot_mini_core.wheel_joint_state_publisher:main',
+            'teleop_to_serial = uiabot_mini_core.teleop_to_serial:main',
             'wheel_encoder_odometry = uiabot_mini_core.wheel_encoder_odometry:main',
         ],
     },

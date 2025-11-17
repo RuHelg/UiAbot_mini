@@ -1,12 +1,11 @@
 from setuptools import find_packages, setup
-import glob
-import os
+import glob # for file searching
+import os   # for file path manipulation
 
 package_name = 'uiabot_mini_bringup'
 
-# collect files but exclude directories (avoid including __pycache__ dirs)
-launch_files = [p for p in glob.glob(os.path.join('launch', '*')) if os.path.isfile(p)]
-config_files = [p for p in glob.glob(os.path.join('config', '*')) if os.path.isfile(p)]
+launch_files = glob.glob(os.path.join('launch', '*'))
+config_files = glob.glob(os.path.join('config', '*'))
 # launch_files = glob.glob('/home/gruppe-6/ros2/ws2/src/uiabot_mini_bringup/launch/*')
 # config_files = glob.glob('/home/gruppe-6/ros2/ws2/src/uiabot_mini_bringup/config/*')
 
