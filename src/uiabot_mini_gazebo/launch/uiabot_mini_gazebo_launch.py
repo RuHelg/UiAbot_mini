@@ -3,7 +3,7 @@ from launch_ros.actions import Node
 from launch.actions import SetEnvironmentVariable, IncludeLaunchDescription, DeclareLaunchArgument, TimerAction, RegisterEventHandler
 from launch.event_handlers import OnProcessExit
 from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, AndSubstitution, NotSubstitution
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 import os
@@ -13,6 +13,8 @@ def generate_launch_description():
     # Launch arguments
     use_rviz = LaunchConfiguration('rviz')
     run_slam = LaunchConfiguration('run_slam')
+    run_nav = LaunchConfiguration('run_nav')
+    
     
     # Package paths
     ros_gz_sim_pkg = get_package_share_directory('ros_gz_sim')
@@ -24,7 +26,16 @@ def generate_launch_description():
     gz_launch_path = os.path.join(ros_gz_sim_pkg, 'launch', 'gz_sim.launch.py')
     world_file = os.path.join(uiabot_mini_gazebo_pkg, 'worlds', 'simple_world.sdf')
     urdf_file = os.path.join(uiabot_mini_description_pkg, 'urdf', 'uiabot_mini.urdf')
-    gazebo_file = os.path.join(uiabot_mini_description_pkg, 'urdf', 'uiabot_mini.gazebo')
+
+    # gazebo file may live in either the gazebo package or the description package
+    gazebo_candidates = [
+        os.path.join(uiabot_mini_gazebo_pkg, 'urdf', 'uiabot_mini.gazebo'),
+        os.path.join(uiabot_mini_description_pkg, 'urdf', 'uiabot_mini.gazebo'),
+    ]
+    gazebo_file = next((p for p in gazebo_candidates if os.path.exists(p)), None)
+    if gazebo_file is None:
+        raise FileNotFoundError(f"uiabot_mini.gazebo not found in any of: {gazebo_candidates}")
+
     controller_config = os.path.join(uiabot_mini_gazebo_pkg, 'config', 'diff_drive_controller.yaml')
     
     # Read URDF and merge with Gazebo elements
@@ -112,7 +123,20 @@ def generate_launch_description():
         parameters=[{'use_sim_time': True}],
         output='screen'
     )
-
+    
+    # Include main bringup launch with use_sim_time=true for Gazebo
+    bringup_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(uiabot_mini_bringup_pkg, 'launch', 'bringup.launch.py')
+        ),
+        launch_arguments={
+            'run_slam': run_slam,
+            'run_nav': run_nav,
+            'map': LaunchConfiguration('map', default=os.path.expanduser('~/ros2_ws/maps/my_map.yaml')),
+            'use_sim_time': 'true'
+        }.items()
+    )
+    
     slam_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
@@ -122,6 +146,18 @@ def generate_launch_description():
             'use_sim_time': 'true'
         }.items(),
         condition=IfCondition(run_slam)
+    )
+
+    nav2_params = os.path.join(uiabot_mini_bringup_pkg, 'config', 'nav2_params.yaml')
+    nav2_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'navigation_launch.py')
+        ),
+        launch_arguments={
+            'params_file': nav2_params,
+            'use_sim_time': 'true'
+        }.items(),
+        condition=IfCondition(run_nav)
     )
     
     rviz_node = Node(
@@ -133,12 +169,19 @@ def generate_launch_description():
         output='screen'
     )
 
+    spawn_robot_delayed = TimerAction(
+        period=2.0,
+        actions=[spawn_robot]
+    )
+
     return LaunchDescription([
         # Declare launch arguments
         DeclareLaunchArgument('rviz', default_value='false', description='Start RViz'),
         DeclareLaunchArgument('run_slam', default_value='false'),
+        DeclareLaunchArgument('run_nav', default_value='false'),
+        DeclareLaunchArgument('map', default_value=os.path.expanduser('~/ros2_ws/maps/my_map.yaml')),
         
-        # Set Gazebo resource path to find meshes and models
+        # Set Gazebo resource path
         SetEnvironmentVariable(
             'GZ_SIM_RESOURCE_PATH',
             ':'.join([
@@ -149,7 +192,7 @@ def generate_launch_description():
         
         gazebo,
         robot_state_publisher,
-        spawn_robot,
+        spawn_robot_delayed,
         bridge_lidar,
         bridge_imu,
         bridge_cmd_vel,
@@ -157,5 +200,6 @@ def generate_launch_description():
         bridge_odom,
         bridge_tf,
         slam_launch,
+        nav2_launch,
         rviz_node,
     ])

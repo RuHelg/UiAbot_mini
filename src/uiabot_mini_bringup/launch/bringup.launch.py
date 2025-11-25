@@ -29,6 +29,8 @@ def generate_launch_description():
     run_nav_arg = DeclareLaunchArgument('run_nav', default_value='false')
     map_file_arg = DeclareLaunchArgument('map', default_value='/home/gruppe-6/ros2/ws2/maps/my_map.yaml')
 
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    use_sim_time_arg = DeclareLaunchArgument('use_sim_time', default_value='false')
 
     # Teleop to Serial Node (custom)
     tts = Node(
@@ -78,7 +80,7 @@ def generate_launch_description():
         executable='wheel_encoder_odometry',
         name='wheel_encoder_odometry',
         output='screen',
-        parameters=[{'odom_update_hz': 30.0}]
+        parameters=[{'odom_update_hz': 30.0, 'use_sim_time': use_sim_time}]
     )
 
     # EKF Node from robot_localization (built-in)
@@ -86,7 +88,8 @@ def generate_launch_description():
         package='robot_localization',
         executable='ekf_node',
         name='ekf_filter_node',
-        parameters=[os.path.join(get_package_share_directory('uiabot_mini_bringup'),'config','ekf.yaml')],
+        parameters=[os.path.join(get_package_share_directory('uiabot_mini_bringup'),'config','ekf.yaml'),
+                    {'use_sim_time': use_sim_time}],
         output='screen',
     )
 
@@ -97,6 +100,7 @@ def generate_launch_description():
             os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
         ),
         launch_arguments={'slam_params_file': slam_params,
+                          'use_sim_time': use_sim_time,
         }.items(),
         condition=IfCondition(run_slam)
     )
@@ -114,7 +118,7 @@ def generate_launch_description():
         launch_arguments={
             'map': map_file,
             'params_file': nav2_params,
-            'use_sim_time': 'false',
+            'use_sim_time': use_sim_time,
             'autostart': 'true'
         }.items(),
         condition=IfCondition(AndSubstitution(run_nav, NotSubstitution(run_slam)))
@@ -127,7 +131,7 @@ def generate_launch_description():
         ),
         launch_arguments={
             'params_file': nav2_params,
-            'use_sim_time': 'false',
+            'use_sim_time': use_sim_time,
             'autostart': 'true'
         }.items(),
         condition=IfCondition(AndSubstitution(run_nav, run_slam))
@@ -144,6 +148,7 @@ def generate_launch_description():
         run_slam_arg,
         run_nav_arg,
         map_file_arg,
+        use_sim_time_arg,
         nav2_with_localization,
         nav2_without_localization
     ])
