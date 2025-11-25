@@ -1,0 +1,7 @@
+teleop_twist_joy:
+    ros__parameters:
+        require_enable_button: false
+        axis_linear:  { x: 1 }          # 1 = LS up/down
+        axis_angular: { yaw: 0 }        # 0 = LS left/right
+        scale_linear:  { x: 0.35 }      # Scaled for 0.35 m/s
+        scale_angular: { yaw: 3.14 }    # Scaled for 0.5 rotation/s
