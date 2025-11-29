@@ -77,8 +77,8 @@ controller_server:
 
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.5
-      movement_time_allowance: 10.0
+      required_movement_radius: 0.125
+      movement_time_allowance: 5.0
     goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
       xy_goal_tolerance: 0.25
@@ -292,62 +292,65 @@ collision_monitor:
     source_timeout: 5.0
     stop_pub_timeout: 2.0
     enable_stamped_cmd_vel: False # False for Jazzy or older by default
-    polygons: ["PolygonStop", "PolygonSlow"]
-    PolygonStop:
-      type: "circle"
-      radius: 0.15
-      # points: "[[0.4, 0.3], [0.4, -0.3], [0.0, -0.3], [0.0, 0.3]]"
-      action_type: "stop"
-      min_points: 4  # max_points: 3 for Humble
-      visualize: True
-      polygon_pub_topic: "polygon_stop"
-    PolygonSlow:
-      type: "circle"
-      radius: 0.5
-      # points: "[[0.6, 0.4], [0.6, -0.4], [0.0, -0.4], [0.0, 0.4]]"
-      action_type: "slowdown"
-      min_points: 4  # max_points: 3 for Humble
-      slowdown_ratio: 1.0
-      
-      visualize: True
-      polygon_pub_topic: "polygon_slowdown"
-    # polygons: ["VelocityPolygonStop"]
-    # VelocityPolygonStop:
-    #   type: "velocity_polygon"
+
+    # polygons: ["PolygonStop", "PolygonSlow"]
+    # PolygonStop:
+    #   type: "circle"
+    #   radius: 0.15
+    #   # points: "[[0.4, 0.3], [0.4, -0.3], [0.0, -0.3], [0.0, 0.3]]"
     #   action_type: "stop"
-    #   min_points: 6
+    #   min_points: 4  # max_points: 3 for Humble
     #   visualize: True
-    #   enabled: True
-    #   polygon_pub_topic: "velocity_polygon_stop"
-    #   velocity_polygons: ["rotation", "translation_forward", "translation_backward", "stopped"]
-    #   holonomic: false
-    #   rotation:
-    #     points: "[[72e-3, 115e-3], [-150e-3, 115e-3], [-150e-3, -115e-3], [72e-3, -115e-3]]"
-    #     linear_min: 0.0
-    #     linear_max: 0.05
-    #     theta_min: -1.0
-    #     theta_max: 1.0
-    #   translation_forward:
-    #     points: "[[72e-3, 115e-3], [-150e-3, 115e-3], [-150e-3, -115e-3], [72e-3, -115e-3]]"
-    #     linear_min: 0.0
-    #     linear_max: 0.3
-    #     theta_min: -1.0
-    #     theta_max: 1.0
-    #   translation_backward:
-    #     points: "[[72e-3, 115e-3], [-150e-3, 115e-3], [-150e-3, -115e-3], [72e-3, -115e-3]]"
-    #     linear_min: -0.3
-    #     linear_max: 0.0
-    #     theta_min: -1.0
-    #     theta_max: 1.0
-    #   # This is the last polygon to be checked, it should cover the entire range of robot's velocities
-    #   # It is used as the stopped polygon when the robot is not moving and as a fallback if the velocity
-    #   # is not covered by any of the other sub-polygons
-    #   stopped:
-    #     points: "[[42e-3, 110e-3], [-120e-3, 110e-3], [-120e-3, -110e-3], [42e-3, -110e-3]]"
-    #     linear_min: -0.3
-    #     linear_max: 0.3
-    #     theta_min: -1.0
-    #     theta_max: 1.0
+    #   polygon_pub_topic: "polygon_stop"
+    # PolygonSlow:
+    #   type: "circle"
+    #   radius: 0.5
+    #   # points: "[[0.6, 0.4], [0.6, -0.4], [0.0, -0.4], [0.0, 0.4]]"
+    #   action_type: "slowdown"
+    #   min_points: 4  # max_points: 3 for Humble
+    #   slowdown_ratio: 1.0
+      
+    #   visualize: True
+    #   polygon_pub_topic: "polygon_slowdown"
+
+    polygons: ["VelocityPolygonStop"]
+    VelocityPolygonStop:
+      type: "velocity_polygon"
+      action_type: "stop"
+      min_points: 6
+      visualize: True
+      enabled: True
+      polygon_pub_topic: "velocity_polygon_stop"
+      velocity_polygons: ["rotation", "translation_forward", "translation_backward", "stopped"]
+      holonomic: false
+      rotation:
+        points: "[[120e-3, 115e-3], [-150e-3, 115e-3], [-150e-3, -115e-3], [120e-3, -115e-3]]"
+        linear_min: 0.0
+        linear_max: 0.05
+        theta_min: -1.0
+        theta_max: 1.0
+      translation_forward:
+        points: "[[200e-3, 115e-3], [-150e-3, 115e-3], [-150e-3, -115e-3], [200e-3, -115e-3]]"
+        linear_min: 0.0
+        linear_max: 0.3
+        theta_min: -1.0
+        theta_max: 1.0
+      translation_backward:
+        points: "[[102e-3, 115e-3], [-150e-3, 115e-3], [-150e-3, -115e-3], [102e-3, -115e-3]]"
+        linear_min: -0.3
+        linear_max: 0.0
+        theta_min: -1.0
+        theta_max: 1.0
+      # This is the last polygon to be checked, it should cover the entire range of robot's velocities
+      # It is used as the stopped polygon when the robot is not moving and as a fallback if the velocity
+      # is not covered by any of the other sub-polygons
+      stopped:
+        points: "[[42e-3, 110e-3], [-120e-3, 110e-3], [-120e-3, -110e-3], [42e-3, -110e-3]]"
+        linear_min: -0.3
+        linear_max: 0.3
+        theta_min: -1.0
+        theta_max: 1.0
+    
     observation_sources: ["scan"]
     scan:
       type: "scan"

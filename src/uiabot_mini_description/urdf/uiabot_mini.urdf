@@ -3,10 +3,10 @@
 
   <!-- ========= Base ========= -->
   <link name="base_link">
-    <inertial>
+    <!-- <inertial>
       <mass value="1.0"/>
       <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
-    </inertial>
+    </inertial> -->
     <visual>
       <geometry>
         <mesh filename="package://uiabot_mini_description/meshes/base_link.STL"/>
@@ -27,7 +27,7 @@
   <!-- ========= Left Wheel ========= -->
   <link name="wheel_l_link">
     <inertial>
-      <mass value="0.1"/>
+      <mass value="1.0"/>
       <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
     </inertial>
     <visual>
@@ -57,7 +57,7 @@
   <!-- ========= Right Wheel ========= -->
   <link name="wheel_r_link">
     <inertial>
-      <mass value="0.1"/>
+      <mass value="1.0"/>
       <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
     </inertial>
     <visual>
@@ -117,13 +117,13 @@
   <joint name="lidar_fixed_joint" type="fixed">
     <parent link="base_link"/>
     <child link="lidar_link"/>
-    <origin xyz="0 0 0.15" rpy="0 0 3.14159265358979"/>
+    <origin xyz="-0.037 0 0.213" rpy="0 0 3.14159265358979"/>
   </joint>
 
   <!-- ========= Caster Wheel ========= -->
   <link name="caster_link">
     <inertial>
-      <mass value="0.05"/>
+      <mass value="1.0"/>
       <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001"/>
     </inertial>
     <visual>
