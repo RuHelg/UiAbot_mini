@@ -1,8 +1,5 @@
 <?xml version="1.0"?>
-<!-- This file contains ONLY Gazebo-specific plugins and sensor configurations -->
-<!-- Use this with your existing uiabot_mini.urdf for simulation -->
-<!-- <robot name="uiabot_mini_gazebo"> -->
-
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
   <!-- Wheel friction -->
   <gazebo reference="wheel_l_link">
     <mu1>1.0</mu1>
@@ -13,7 +10,6 @@
     <maxVel>10.0</maxVel>
     <fdir1>0 1 0</fdir1>
   </gazebo>
-
   <gazebo reference="wheel_r_link">
     <mu1>1.0</mu1>
     <mu2>1.0</mu2>
@@ -23,7 +19,6 @@
     <maxVel>10.0</maxVel>
     <fdir1>0 1 0</fdir1>
   </gazebo>
-
   <!-- Caster wheel - low friction for free rolling -->
   <gazebo reference="caster_link">
     <mu1>0.1</mu1>
@@ -115,7 +110,7 @@
       <sensor name="rplidar_a1" type="gpu_lidar">
           <always_on>true</always_on>
           <visualize>true</visualize>
-          <update_rate>10</update_rate>
+          <update_rate>12</update_rate>
           <topic>scan</topic>
           <gz_frame_id>lidar_link</gz_frame_id>
           <ray>
@@ -135,5 +130,4 @@
           </ray>
       </sensor>
   </gazebo>
-
 </robot>

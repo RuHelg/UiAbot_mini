@@ -7,6 +7,7 @@ from launch.substitutions import LaunchConfiguration, AndSubstitution, NotSubsti
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 import os
+import subprocess
 import tempfile
 import time
 
@@ -37,57 +38,40 @@ def generate_launch_description():
     # File paths
     gz_launch_path = os.path.join(ros_gz_sim_pkg, 'launch', 'gz_sim.launch.py')
     world_file = os.path.join(uiabot_mini_gazebo_pkg, 'worlds', 'simple_world.sdf')
-    urdf_file = os.path.join(uiabot_mini_description_pkg, 'urdf', 'uiabot_mini.urdf')
+    # Path to the XACRO file
+    xacro_file = 'src/uiabot_mini_gazebo/urdf/uiabot_mini.xacro'
+    # Path for the generated URDF file
+    urdf_output = 'src/uiabot_mini_gazebo/urdf/merged.urdf'
 
-    # Try installed package share paths first, then workspace `src` copies as a fallback
-    gazebo_candidates = [
-        os.path.join(uiabot_mini_gazebo_pkg, 'urdf', 'uiabot_mini_gazebo.urdf'),
-        os.path.join(os.path.expanduser('~'), 'ros2_ws', 'src', 'uiabot_mini_gazebo', 'urdf', 'uiabot_mini_gazebo.urdf'),
-    ]
-    gazebo_file = next((p for p in gazebo_candidates if os.path.exists(p)), None)
-    if gazebo_file is None:
-        raise FileNotFoundError(
-            f"uiabot_mini_gazebo.urdf not found in any of: {gazebo_candidates}"
-        )
-
-    controller_config = os.path.join(uiabot_mini_gazebo_pkg, 'config', 'diff_drive_controller.yaml')
-    
-    # Read URDF and merge with Gazebo elements
-    with open(urdf_file, 'r') as f:
-        urdf_content = f.read()
-    with open(gazebo_file, 'r') as f:
-        gazebo_content = f.read()
-    
-    # Extract gazebo content (remove XML declaration and robot wrapper if present)
-    gazebo_inner = gazebo_content.replace('<?xml version="1.0"?>', '', 1).strip()
-    if gazebo_inner.startswith('<robot'):
-        # Extract content between <robot ...> and </robot>
-        start = gazebo_inner.find('>') + 1
-        end = gazebo_inner.rfind('</robot>')
-        gazebo_inner = gazebo_inner[start:end].strip()
-    
-    # Merge: insert gazebo content before closing </robot>
-    robot_desc = urdf_content.replace('</robot>', gazebo_inner)
-
-    # Save the merged URDF to a temporary file in a user-writable directory
-    fd, merged_urdf_path = tempfile.mkstemp(suffix='.urdf', prefix='uiabot_mini_merged_')
-    # Close the low-level fd returned by mkstemp before using Python's file API.
-    # Ensure data is flushed & synced and give a tiny delay so other processes can open it reliably.
-    os.close(fd)
+    # Run xacro now (synchronously) so we have the URDF contents available for nodes
     try:
-        with open(merged_urdf_path, 'w') as mf:
-            mf.write(robot_desc)
-            mf.flush()
-            os.fsync(mf.fileno())
-        # Small delay to avoid race where Gazebo/spawn tries to open file immediately
-        time.sleep(0.05)
-    except OSError as e:
-        raise RuntimeError(
-            f"Failed to write merged URDF to '{merged_urdf_path}'. "
-            "This may be due to insufficient permissions, missing directory, or lack of disk space. "
-            f"Original error: {e}"
-        )
-    
+        subprocess.run(['xacro', xacro_file, '-o', urdf_output], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"xacro generation failed:\n{e.stderr}") from e
+
+    # Read the generated URDF and provide its contents to robot_state_publisher
+    with open(urdf_output, 'r') as urdf_file_handle:
+        urdf_content = urdf_file_handle.read()
+
+    robot_state_publisher = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='robot_state_publisher',
+        output='screen',
+        parameters=[{'robot_description': urdf_content, 'use_sim_time': True}]
+    )
+
+    spawn_robot = Node(
+        package='ros_gz_sim',
+        executable='create',
+        arguments=[
+            '-file', urdf_output,  # <-- use the generated URDF, not the xacro file
+            '-name', 'uiabot_mini',
+            '-z', '0.1'
+        ],
+        output='screen'
+    )
+
     # Nodes
     # create the Gazebo IncludeLaunchDescription and start it with a small delay
     gazebo_include = IncludeLaunchDescription(
@@ -102,37 +86,17 @@ def generate_launch_description():
         actions=[gazebo_include]
     )
     
-    robot_state_publisher = Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        name='robot_state_publisher',
-        output='screen',
-        parameters=[{'robot_description': robot_desc, 'use_sim_time': True}]
-    )
-
-    spawn_robot = Node(
-        package='ros_gz_sim',
-        executable='create',
-        arguments=[
-            '-file', merged_urdf_path,
-            '-name', 'uiabot_mini',
-            '-z', '0.1'
-        ],
-        output='screen'
-    )
-
     bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
         name='ros_gz_bridge',
         arguments=[
-            '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',            # ROS -> Gazebo
-            '/wheel_encoder_odometry@nav_msgs/msg/Odometry[gz.msgs.Odometry',              # Gazebo -> ROS
-            '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',              # Gazebo -> ROS
-            '/bno055/imu@sensor_msgs/msg/Imu[gz.msgs.IMU',                      # Gazebo -> ROS
-            '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',         # Gazebo -> ROS
-            '/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model',    # Gazebo -> ROS
-            # '/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',                 # Gazebo -> ROS
+            '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',                # ROS -> Gazebo
+            '/wheel_encoder_odometry@nav_msgs/msg/Odometry[gz.msgs.Odometry',# Gazebo -> ROS
+            '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',                  # Gazebo -> ROS
+            '/bno055/imu@sensor_msgs/msg/Imu[gz.msgs.IMU',                   # Gazebo -> ROS
+            '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',             # Gazebo -> ROS
+            '/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model',        # Gazebo -> ROS
         ],
         parameters=[{'use_sim_time': True}],
         output='screen'
@@ -151,12 +115,6 @@ def generate_launch_description():
     spawn_robot_delayed = TimerAction(
         period=2.0,
         actions=[spawn_robot]
-    )
-    # cleanup temporary merged URDF on shutdown (safer: works for IncludeLaunchDescription)
-    cleanup_handler = RegisterEventHandler(
-        OnShutdown(
-            on_shutdown=[ExecuteProcess(cmd=['/bin/rm', '-f', merged_urdf_path])]
-        )
     )
 
     slam_launch = IncludeLaunchDescription(
@@ -188,10 +146,6 @@ def generate_launch_description():
         name='ekf_filter_node',
         output='screen',
         parameters=[os.path.join(uiabot_mini_bringup_pkg, 'config', 'ekf.yaml'), {'use_sim_time': True}],
-        # remappings=[
-        #     ('/wheel_encoder_odometry', '/odom'),
-        #     ('/bno055/imu', '/imu'),
-        # ]
     )
 
     return LaunchDescription([
@@ -202,23 +156,12 @@ def generate_launch_description():
         DeclareLaunchArgument('map', default_value=os.path.expanduser('~/ros2_ws/maps/my_map.yaml')),
         
         # Set Gazebo resource path
-        set_gz_resource_path,
-
-        # # Set Gazebo resource path
-        # SetEnvironmentVariable(
-        #     'GZ_SIM_RESOURCE_PATH',
-        #     ':'.join([
-        #         os.path.join(os.path.expanduser('~'), 'ros2_ws', 'src'),
-        #         os.path.join(os.path.expanduser('~'), 'ros2_ws', 'src', 'uiabot_mini_gazebo')
-        #     ])
-        # ),
-        
+        set_gz_resource_path,        
         gazebo,
         robot_state_publisher,
         spawn_robot_delayed,
         bridge,
         ekf_node,
-        cleanup_handler,
         slam_launch,
         nav2_launch,
         rviz_node,

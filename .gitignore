@@ -26,3 +26,4 @@ Thumbs.db
 # Backup files
 *~
 *.bak
+src/uiabot_mini_gazebo/urdf/merged.urdf
