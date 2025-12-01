@@ -1,21 +1,14 @@
 from setuptools import find_packages, setup
-import glob # for file searching
-import os   # for file path manipulation
 
-package_name = 'uiabot_mini_bringup'
-
-launch_files = glob.glob(os.path.join('launch', '*'))
-config_files = glob.glob(os.path.join('config', '*'))
+package_name = 'uiabot_mini'
 
 setup(
     name=package_name,
     version='0.0.0',
-    packages=[],
+    packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        (os.path.join('share', package_name, 'launch'), launch_files),
-        (os.path.join('share', package_name, 'config'), config_files),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -26,6 +19,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'wheel_joint_state_publisher = uiabot_mini.wheel_joint_state_publisher:main',
+            'teleop_to_serial = uiabot_mini.teleop_to_serial:main',
+            'wheel_encoder_odometry = uiabot_mini.wheel_encoder_odometry:main',
         ],
     },
 )
