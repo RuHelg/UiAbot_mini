@@ -1,0 +1,61 @@
+colcon build --parallel-workers 4 --packages-skip robot_localization   &&
+colcon build --packages-select robot_localization --parallel-workers 1 &&
+
+cd /home/gruppe-6/ros2/ws && 
+source install/setup.bash &&
+ros2 launch uiabot_mini_bringup bringup.launch.py run_slam:=false run_nav:=true 
+
+
+
+#SLAM only
+ros2 launch uiabot_mini_bringup bringup.launch.py run_slam:=true run_nav:=false
+
+#nav2 only
+ros2 launch uiabot_mini_bringup bringup.launch.py run_slam:=false run_nav:=true 
+
+#slam + nav2 new map
+ros2 launch uiabot_mini_bringup bringup.launch.py run_slam:=true run_nav:=true
+
+
+
+ros2 run tf2_tools view_frames
+
+#1 terminal
+ros2 launch nav2_bringup navigation_launch.py nav2_params_file:=src/uiabot_mini_bringup/config/nav2_params.yaml
+#2 terminal
+os2 launch slam_toolbox online_async_launch.py slam_params:=src/uiabot_mini_bringup/config/slam_params.yaml
+
+#AMCL test
+ros2 launch nav2_bringup localization_launch.py map:=src/maps/Datalab.yaml use_sim_time:=false
+
+# Run SLAM only (map building)
+ros2 launch uiabot_mini_bringup bringup.launch.py
+
+# Run SLAM + Nav2 with saved map (live mapping + navigation)
+ros2 launch uiabot_mini_bringup bringup.launch.py run_nav:=true
+
+
+
+
+############# KILLKILL #######################
+# 1) See what ROS2/python processes are running
+ps aux | egrep 'ros2|rviz2|slam_toolbox|nav2|robot_state_publisher|ekf_node|async_slam_toolbox_node' | egrep -v 'egrep'
+
+# 2) Stop ros2 daemon and try graceful kill
+ros2 daemon stop
+pkill -f "ros2" || true
+pkill -f "rviz2" || true
+pkill -f "python3 .*ros" || true
+
+# 3) Force kill any remaining ROS2-related processes (if still present)
+pkill -9 -f "ros2" || true
+pkill -9 -f "rviz2" || true
+pkill -9 -f "python3 .*ros" || true
+
+# 4) Clean DDS shared memory (Fast-RTPS), only if using Fast-RTPS and errors persist
+sudo rm -rf /dev/shm/rtps_* 2>/dev/null || true
+
+# 5) Verify everything stopped
+ros2 node list || true
+ros2 topic list || true
+ps aux | egrep 'ros2|rviz2|slam_toolbox|nav2|robot_state_publisher|ekf_node' | egrep -v 'egrep' || true
