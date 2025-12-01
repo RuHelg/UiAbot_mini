@@ -1,15 +1,13 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import SetEnvironmentVariable, IncludeLaunchDescription, DeclareLaunchArgument, TimerAction, RegisterEventHandler, ExecuteProcess
-from launch.event_handlers import OnProcessExit, OnShutdown, OnProcessStart
+from launch.actions import SetEnvironmentVariable, IncludeLaunchDescription, DeclareLaunchArgument, TimerAction
 from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration, AndSubstitution, NotSubstitution
+from launch.substitutions import LaunchConfiguration
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 import os
 import subprocess
 import tempfile
-import time
 
 
 def generate_launch_description():
@@ -42,21 +40,28 @@ def generate_launch_description():
     # File paths
     gz_launch_path = os.path.join(ros_gz_sim_pkg, 'launch', 'gz_sim.launch.py')
     world_file = os.path.join(uiabot_mini_gazebo_pkg, 'worlds', 'simple_world.sdf')
-    # Path to the XACRO file
-    xacro_file = 'src/uiabot_mini_gazebo/urdf/uiabot_mini.xacro'
-    # Path for the generated URDF file
-    urdf_output = 'src/uiabot_mini_gazebo/urdf/merged.urdf'
+    xacro_file = os.path.join(uiabot_mini_gazebo_pkg, 'urdf', 'uiabot_mini.xacro')
+    urdf_output = os.path.join(tempfile.gettempdir(), 'uiabot_mini_merged.urdf')
 
-    # Run xacro now (synchronously) so we have the URDF contents available for nodes
+    # Run xacro to generate URDF
     try:
-        subprocess.run(['xacro', xacro_file, '-o', urdf_output], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result = subprocess.run(
+            ['xacro', xacro_file, '-o', urdf_output],
+            check=True,
+            capture_output=True,
+            text=True
+        )
     except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"xacro generation failed:\n{e.stderr}") from e
+        raise RuntimeError(
+            f"xacro generation failed for {xacro_file}\n"
+            f"Error: {e.stderr}"
+        ) from e
 
-    # Read the generated URDF and provide its contents to robot_state_publisher
+    # Read the generated URDF
     with open(urdf_output, 'r') as urdf_file_handle:
         urdf_content = urdf_file_handle.read()
 
+    # Nodes
     robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -76,7 +81,6 @@ def generate_launch_description():
         output='screen'
     )
 
-    # Nodes
     gazebo_include = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(gz_launch_path),
         launch_arguments={
@@ -84,6 +88,7 @@ def generate_launch_description():
             'on_exit_shutdown': 'True'
         }.items(),
     )
+    
     gazebo = TimerAction(
         period=0.5,
         actions=[gazebo_include]
@@ -130,13 +135,12 @@ def generate_launch_description():
         condition=IfCondition(run_slam)
     )
 
-    nav2_params = os.path.join(uiabot_mini_bringup_pkg, 'config', 'nav2_params.yaml')
     nav2_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'navigation_launch.py')
         ),
         launch_arguments={
-            'params_file': nav2_params,
+            'params_file': os.path.join(uiabot_mini_bringup_pkg, 'config', 'nav2_params.yaml'),
             'use_sim_time': 'true'
         }.items(),
         condition=IfCondition(run_nav)
@@ -147,18 +151,17 @@ def generate_launch_description():
         executable='ekf_node',
         name='ekf_filter_node',
         output='screen',
-        parameters=[os.path.join(uiabot_mini_bringup_pkg, 'config', 'ekf.yaml'), {'use_sim_time': True}],
+        parameters=[
+            os.path.join(uiabot_mini_bringup_pkg, 'config', 'ekf.yaml'),
+            {'use_sim_time': True}
+        ],
     )
 
     return LaunchDescription([
-        # Set Gazebo resource path (combines description meshes + models dir)
         gz_resource_path,
-        # Declare launch arguments
         DeclareLaunchArgument('rviz', default_value='false', description='Start RViz'),
-        DeclareLaunchArgument('run_slam', default_value='false'),
-        DeclareLaunchArgument('run_nav', default_value='false'),
-        DeclareLaunchArgument('map', default_value=os.path.expanduser('~/ros2_ws/maps/my_map.yaml')),
-        
+        DeclareLaunchArgument('run_slam', default_value='false', description='Start SLAM Toolbox'),
+        DeclareLaunchArgument('run_nav', default_value='false', description='Start Nav2'),
         gazebo,
         robot_state_publisher,
         spawn_robot_delayed,
