@@ -22,10 +22,7 @@ def generate_launch_description():
     uiabot_mini_description_pkg = get_package_share_directory('uiabot_mini_description')
     uiabot_mini_bringup_pkg = get_package_share_directory('uiabot_mini_bringup')
     
-    # Set GZ_SIM_RESOURCE_PATH to include BOTH:
-    # 1. The install share directory (for model://uiabot_mini_description/meshes)
-    # 2. The models directory (for custom Gazebo models)
-    models_dir = os.path.join(uiabot_mini_gazebo_pkg, 'models')
+    # Set GZ_SIM_RESOURCE_PATH for model://uiabot_mini_description/meshes
     description_share_parent = os.path.dirname(uiabot_mini_description_pkg)
     
     gz_resource_path = SetEnvironmentVariable(
@@ -33,7 +30,6 @@ def generate_launch_description():
         value=os.pathsep.join(filter(None, [
             os.environ.get('GZ_SIM_RESOURCE_PATH', ''),
             description_share_parent,  # For model://uiabot_mini_description/meshes
-            models_dir,                # For custom Gazebo models
         ]))
     )
 

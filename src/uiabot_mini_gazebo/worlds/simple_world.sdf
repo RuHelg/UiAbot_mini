@@ -220,17 +220,13 @@
 
     <!-- spawn an office chair from Fuel -->
     <include>
-      <uri>model://OfficeChairGrey</uri>
-      <name>office_chair_1</name>
-      <!-- set pose: x y z roll pitch yaw -->
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Office Chair</uri>
       <pose>1.5 -1 0 0 0 1.57</pose>
     </include>
 
-     <!-- spawn an table from Fuel -->
+     <!-- spawn a table from Fuel -->
     <include>
-      <uri>model://Table</uri>
-      <name>table_1</name>
-      <!-- set pose: x y z roll pitch yaw -->
+      <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Table</uri>
       <pose>2 -1 0 0 0 1.57</pose>
     </include>
 
