@@ -6,8 +6,46 @@ echo "Xbox Controller Teleop Setup"
 echo "========================================="
 echo ""
 
+# Find workspace root automatically by looking for install/setup.bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WS_ROOT="$SCRIPT_DIR"
+
+# Search upwards for install/setup.bash
+while [ "$WS_ROOT" != "/" ]; do
+    if [ -f "$WS_ROOT/install/setup.bash" ]; then
+        break
+    fi
+    WS_ROOT="$(dirname "$WS_ROOT")"
+done
+
+# Source workspace
+echo "1. Sourcing workspace..."
+if [ -f "$WS_ROOT/install/setup.bash" ]; then
+    source "$WS_ROOT/install/setup.bash"
+    echo "   ✓ Workspace sourced from: $WS_ROOT"
+else
+    echo "   ✗ Could not find workspace with install/setup.bash"
+    echo "   Searched from: $SCRIPT_DIR"
+    exit 1
+fi
+
+# Find config file using ros2 pkg prefix
+PACKAGE_SHARE=$(ros2 pkg prefix xbox_wsl 2>/dev/null)/share/xbox_wsl
+TELEOP_PARAMS_FILE="$PACKAGE_SHARE/config/xbox_teleop.yaml"
+
+if [ ! -f "$TELEOP_PARAMS_FILE" ]; then
+    # Fallback to source directory
+    TELEOP_PARAMS_FILE="$SCRIPT_DIR/../config/xbox_teleop.yaml"
+    echo "   Using config from source: $TELEOP_PARAMS_FILE"
+fi
+
+if [ ! -f "$TELEOP_PARAMS_FILE" ]; then
+    echo "   ✗ Could not find xbox_teleop.yaml config file"
+    exit 1
+fi
+
 # Start xboxdrv in background
-echo "1. Starting xboxdrv..."
+echo "2. Starting xboxdrv..."
 sudo pkill xboxdrv 2>/dev/null
 sleep 1
 sudo xboxdrv --detach-kernel-driver --silent &
@@ -15,7 +53,7 @@ XBOXDRV_PID=$!
 sleep 2
 
 # Fix permissions
-echo "2. Fixing permissions..."
+echo "3. Fixing permissions..."
 sudo chmod 666 /dev/input/event0 2>/dev/null
 if [ $? -eq 0 ]; then
     echo "   ✓ Permissions fixed"
@@ -24,11 +62,6 @@ else
     kill $XBOXDRV_PID 2>/dev/null
     exit 1
 fi
-
-# Source workspace
-echo "3. Sourcing workspace..."
-source ~/ros2_ws/install/setup.bash
-echo "   ✓ Workspace sourced"
 
 # Start joy node in background
 echo "4. Starting joy_node..."
@@ -44,9 +77,8 @@ else
     exit 1
 fi
 
-# Start teleop_twist_joy node with config file (use absolute path and set node name)
+# Start teleop_twist_joy node with config file
 echo "5. Starting teleop_twist_joy node..."
-TELEOP_PARAMS_FILE="$HOME/ros2_ws/src/xbox_wsl/config/xbox_teleop.yaml"
 ros2 run teleop_twist_joy teleop_node \
     --ros-args \
     --params-file "${TELEOP_PARAMS_FILE}" \
