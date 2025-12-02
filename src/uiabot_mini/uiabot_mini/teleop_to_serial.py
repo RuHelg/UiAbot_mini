@@ -4,10 +4,10 @@ from rclpy.node import Node
 from geometry_msgs.msg import Twist
 from time import sleep
 # Assignment 2
-from std_msgs.msg import Float32
-from rclpy.qos import qos_profile_sensor_data
+# from std_msgs.msg import Float32
+from sensor_msgs.msg import JointState
 
-# odometry
+# Odometry
 import math
 from nav_msgs.msg import Odometry
 
@@ -19,36 +19,48 @@ class TeleopToSerial(Node):
         # Initialize the ROS2 node
         super().__init__('teleop_to_serial')
         
-        # Declare parameters, so they can be changed via command line or launch file
+        # =========== Declare parameters =========== (so they can be changed via command line or launch file)
         self.declare_parameter('serial_port', '/dev/ttyUSB1') # Linux, run "dmesg | grep -i usb"
         self.declare_parameter('baudrate', 115200)            # Common baudrate for serial communication
         self.declare_parameter('serial_timeout', 0.02)        # Timeout for serial read operations in seconds
         self.declare_parameter('read_feedback_hz', 10.0)      # read_wheel_feedback rate
         self.declare_parameter('cmd_vel_send_delay', 0.0)     # Delay after sending cmd_vel data in seconds
 
+        # Joint state publisher parameters
+        self.declare_parameter('left_wheel_joint', 'wheel_l_joint')
+        self.declare_parameter('right_wheel_joint', 'wheel_r_joint')
+
         # Odometry parameters
         self.declare_parameter('odom_topic', '/wheel_encoder_odometry')
         self.declare_parameter('odom_frame', 'odom')
         self.declare_parameter('base_frame', 'base_link')
 
-        # Retrieve parameter values
-        serial_port = self.get_parameter('serial_port').value
-        baudrate = self.get_parameter('baudrate').value
-        serial_timeout = self.get_parameter('serial_timeout').value
-        read_feedback_hz = self.get_parameter('read_feedback_hz').value
+        # =========== Retrieve parameter values ===========
+        # Serial communication parameters
+        serial_port             = self.get_parameter('serial_port').value
+        baudrate                = self.get_parameter('baudrate').value
+        serial_timeout          = self.get_parameter('serial_timeout').value
+        read_feedback_hz        = self.get_parameter('read_feedback_hz').value
         self.cmd_vel_send_delay = self.get_parameter('cmd_vel_send_delay').value
+
+        # Joint state publisher parameters
+        self.left_joint_name  = self.get_parameter('left_wheel_joint').value
+        self.right_joint_name = self.get_parameter('right_wheel_joint').value
+
+        # Odometry parameters
         self.odom_topic   = self.get_parameter('odom_topic').value
         self.odom_frame   = self.get_parameter('odom_frame').value
         self.base_frame   = self.get_parameter('base_frame').value
     
-        # Create subscriptions and publishers
-        self.sub_cmd_vel = self.create_subscription(Twist, 'cmd_vel', self.cmd_vel_callback, 10) # Queue size 10
-        
-        self.pub_wheel_l = self.create_publisher(Float32, 'wheel_l/velocity', qos_profile_sensor_data)
-        self.pub_wheel_r = self.create_publisher(Float32, 'wheel_r/velocity', qos_profile_sensor_data)
+        # =========== Create subscriptions and publishers ===========
+        # Subscription to cmd_vel topic
+        self.sub_cmd_vel = self.create_subscription(Twist, 'cmd_vel', self.cmd_vel_callback, 5) # Queue size 5
 
+        # Joint State publisher (wheel positions)
+        self.pub_js = self.create_publisher(JointState, 'joint_states', 10)
+        
         # Odometry publisher (for robot_localization)
-        self.pub_odom = self.create_publisher(Odometry, self.odom_topic, 10)
+        self.pub_odom = self.create_publisher(Odometry, self.odom_topic, 20)
 
         # Initialize serial communication
         try:
@@ -59,6 +71,9 @@ class TeleopToSerial(Node):
             # Log successful connection
             self.get_logger().info(f"Serial port '{self.ser.port}' opened successfully.")
 
+            # RX buffer for robust packet parsing
+            self.rx_buffer = bytearray()
+
             # Send reset on startup
             self.send_reset_pulse()
         
@@ -66,6 +81,7 @@ class TeleopToSerial(Node):
         except serial.SerialException as e:
             self.get_logger().error(f"Error opening serial port: {e}")
             self.ser = None
+            self.rx_buffer = bytearray()
             exit(1)
 
         self.timer = self.create_timer(1.0 / read_feedback_hz, self.read_from_serial)
@@ -129,69 +145,186 @@ class TeleopToSerial(Node):
             self.get_logger().error(f"Failed to send zero values: {e}")
 
     def read_from_serial(self):
-        """Read odometry from serial and publish to ROS2 topics
+        """Read odometry from serial and publish to ROS2 topics.
 
-        Expected packet format from ESP32:
-
+        Expected packet format from ESP32 (little-endian):
             uint8  0x24        header 1
             uint8  0x24        header 2
-            float  omega_l     [rad/s]
-            float  omega_r     [rad/s]
+            float  theta_l     [rad]
+            float  theta_r     [rad]
             float  x           [m]
             float  y           [m]
             float  yaw         [rad]
-            float  v           [m/s]  (linear x in base_link)
-            float  w           [rad/s] (angular z)
+            float  v           [m/s]    (linear x in base_link)
+            float  w           [rad/s]  (angular z)
+        Total: 2 bytes header + 7*4 bytes floats = 30 bytes
         """
-        
-        # Check if serial port is initialized 
+
         if self.ser is None:
             self.get_logger().error("Serial port not initialized.")
             return
-        
-        # Read 30 bytes from serial
+
+        HEADER = b'\x24\x24'
+        FRAME_LEN = 30
+        PAYLOAD_LEN = FRAME_LEN - len(HEADER)
+
         try:
-            input_data = self.ser.read(30)
-
-            # Check if enough data was received
-            # if len(input_data) < 22: 
-            #     self.get_logger().warning("Incomplete data received")
-            #     return
-            
-            # Clear buffer to avoid overflow and look for header
-            # self.ser.reset_input_buffer()
-            header_pos = input_data.find(b'\x24\x24') 
-
-            # Check if header was found
-            if header_pos == -1:
-                self.get_logger().warning("Header not found in received data")
+            # Read all currently available bytes (non-blocking due to timeout)
+            available = self.ser.in_waiting
+            if available == 0:
                 return
 
-            # Extract 28 bytes after the header for seven floats
-            in_data = input_data[(header_pos+2):(header_pos+30)]
+            chunk = self.ser.read(available)
+            if not chunk:
+                return
 
-            # Check if we have exactly 28 bytes for seven floats
-            # if len(in_data) != 28:
-            #     self.get_logger().warning("Incomplete float data received")
-            #     return
-            
-            # Unpack 7 floats: omega_l, omega_r, x, y, yaw, v, w
-            omega_l, omega_r, x, y, yaw, v, w = struct.unpack('<fffffff', in_data)
+            # Append to rolling buffer
+            self.rx_buffer.extend(chunk)
 
-            # Uncomment for debugging
-            # self.get_logger().info(f"Received values: {omega_l}, {omega_r}, {x}, {y}, {yaw}, {v}, {w}")
-            
-            self.pub_wheel_l.publish(Float32(data=omega_l))
-            self.pub_wheel_r.publish(Float32(data=omega_r))
+            # Try to extract as many complete frames as possible
+            while True:
+                # Look for header in buffer
+                idx = self.rx_buffer.find(HEADER)
 
-            # Build and publish Odometry message
-            self.publish_odom(x, y, yaw, v, w)
-        
-        # Handle unpacking and serial communication errors
-        except struct.error as e:
-            self.get_logger().error(f"Error unpacking data: {e}")
+                if idx == -1:
+                    # No header at all: keep only last byte as potential start of header
+                    if len(self.rx_buffer) > 1:
+                        self.rx_buffer = self.rx_buffer[-1:]
+                    break
+
+                # Drop any noise before the header
+                if idx > 0:
+                    del self.rx_buffer[:idx]
+
+                # Now buffer starts with header at index 0
+                if len(self.rx_buffer) < FRAME_LEN:
+                    # Not enough bytes yet for a full frame
+                    break
+
+                # Extract one frame
+                frame = self.rx_buffer[:FRAME_LEN]
+                del self.rx_buffer[:FRAME_LEN]
+
+                # Safety: verify header again
+                if frame[0:2] != HEADER:
+                    self.get_logger().warning("Header mismatch after alignment, discarding frame.")
+                    continue
+
+                payload = frame[2:]
+                if len(payload) != PAYLOAD_LEN:
+                    self.get_logger().warning("Incorrect payload length, discarding frame.")
+                    continue
+
+                try:
+                    theta_l, theta_r, x, y, yaw, v, w = struct.unpack('<fffffff', payload)
+                except struct.error as e:
+                    self.get_logger().warning(f"Error unpacking frame: {e}")
+                    continue
+
+                # --- Publish JointState ---
+                js = JointState()
+                now = self.get_clock().now()
+                js.header.stamp = now.to_msg()
+                js.name = [self.left_joint_name, self.right_joint_name]
+                js.position = [theta_l, theta_r]
+                self.pub_js.publish(js)
+
+                # --- Publish Odometry ---
+                self.publish_odom(x, y, yaw, v, w)
+
         except serial.SerialException as e:
             self.get_logger().error(f"Serial communication error: {e}")
+        except Exception as e:
+            # Catch-all so one bad frame doesn't kill the node
+            self.get_logger().error(f"Unexpected error while reading serial: {e}")
+
+
+    # def read_from_serial(self):
+    #     """Read odometry from serial and publish to ROS2 topics
+
+    #     Expected packet format from ESP32:
+
+    #         uint8  0x24        header 1
+    #         uint8  0x24        header 2
+    #         float  theta_l     [rad]
+    #         float  theta_r     [rad]
+    #         float  x           [m]
+    #         float  y           [m]
+    #         float  yaw         [rad]
+    #         float  v           [m/s]  (linear x in base_link)
+    #         float  w           [rad/s] (angular z)
+    #     """
+        
+    #     # Check if serial port is initialized 
+    #     if self.ser is None:
+    #         self.get_logger().error("Serial port not initialized.")
+    #         return
+        
+    #     # Read 30 bytes from serial
+    #     try:
+
+    #         input_data = self.ser.read(30)
+    #         if len(input_data) != 30:
+    #             return
+
+    #         if input_data[0:2] != b'\x24\x24':
+    #             self.get_logger().warning("Bad packet header")
+    #             return
+
+    #         in_data = input_data[2:30]
+    #         theta_l, theta_r, x, y, yaw, v, w = struct.unpack('<fffffff', in_data)
+            
+    #         # input_data = self.ser.read(30)            
+
+    #         # # Check if enough data was received
+    #         # # if len(input_data) < 30: 
+    #         # #     self.get_logger().warning("Incomplete data received")
+    #         # #     return
+            
+    #         # # Clear buffer to avoid overflow and look for header
+    #         # # self.ser.reset_input_buffer()
+    #         # header_pos = input_data.find(b'\x24\x24') 
+
+    #         # # Check if header was found
+    #         # if header_pos == -1:
+    #         #     self.get_logger().warning("Header not found in received data")
+    #         #     return
+
+    #         # # Extract 28 bytes after the header for seven floats
+    #         # in_data = input_data[(header_pos+2):(header_pos+30)]
+
+    #         # # Check if we have exactly 28 bytes for seven floats
+    #         # # if len(in_data) != 28:
+    #         # #     self.get_logger().warning("Incomplete float data received")
+    #         # #     return
+            
+    #         # # Unpack 7 floats: theta_l, theta_r, x, y, yaw, v, w
+    #         # theta_l, theta_r, x, y, yaw, v, w = struct.unpack('<fffffff', in_data)
+
+    #         # Uncomment for debugging
+    #         # self.get_logger().info(f"Received values: {theta_l}, {theta_r}, {x}, {y}, {yaw}, {v}, {w}")
+            
+    #         # Create and publish JointState message
+    #         js = JointState()
+    #         now = self.get_clock().now()
+    #         js.header.stamp = now.to_msg()
+    #         js.name = [self.left_joint_name, self.right_joint_name]
+    #         js.position = [theta_l, theta_r]
+    #         self.pub_js.publish(js)
+            
+    #         # Uncomment for debugging
+    #         # self.get_logger().info(
+    #         #     f"Publishing JointState: position=({theta_l:.3f}, {theta_r:.3f}), "
+    #         # )
+
+    #         # Build and publish Odometry message
+    #         self.publish_odom(x, y, yaw, v, w)
+        
+    #     # Handle unpacking and serial communication errors
+    #     except struct.error as e:
+    #         self.get_logger().error(f"Error unpacking data: {e}")
+    #     except serial.SerialException as e:
+    #         self.get_logger().error(f"Serial communication error: {e}")
 
     def send_reset_pulse(self):
         """Send a single reset packet (zero velocities, reset flag = 1)."""
@@ -239,7 +372,7 @@ class TeleopToSerial(Node):
             odom_msg.twist.twist.angular.y = 0.0
             odom_msg.twist.twist.angular.z = float(w)
 
-            # Covariances can be filled here if desired; leaving as zeros for now
+            # Covariances can be filled here if desired; is currently zeros
 
             self.pub_odom.publish(odom_msg)
 

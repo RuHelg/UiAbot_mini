@@ -13,19 +13,21 @@ from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
 # Assignment 4, nav2
 from launch.substitutions import AndSubstitution, NotSubstitution
+from launch.substitutions import PathJoinSubstitution
+
 
 def generate_launch_description():
 
-    # Package share directories
-    pkg_share = get_package_share_directory('uiabot_mini_description')
+    # File paths to uiabot_mini_bringup package
+    bringup_dir   = get_package_share_directory('uiabot_mini_bringup') # Path to bringup package
+    config_dir    = os.path.join(bringup_dir, 'config')                # Path to config directory
 
     # File paths, internal to uiabot_mini package
-    config_dir     = os.path.join(pkg_share, 'config')                       # Path to config directory
-    bno055_params  = os.path.join(config_dir, 'bno055_params_i2c.yaml')      # Path to BNO055 params file
-    ekf_config     = os.path.join(config_dir, 'ekf.yaml')                    # Path to ekf config file
-    slam_params    = os.path.join(config_dir, 'slam_params.yaml')            # Path to SLAM params file
-    nav2_params    = os.path.join(config_dir, 'nav2_params.yaml')            # Path to Nav2 params file
-    default_map    = os.path.join(pkg_share, 'maps', 'my_map.yaml')          # Path to default map file
+    bno055_params = os.path.join(config_dir, 'bno055_params_i2c.yaml') # Path to BNO055 params file
+    ekf_config    = os.path.join(config_dir, 'ekf.yaml')               # Path to ekf config file
+    slam_params   = os.path.join(config_dir, 'slam_params.yaml')       # Path to SLAM params file
+    nav2_params   = os.path.join(config_dir, 'nav2_params.yaml')       # Path to Nav2 params file
+    
 
     # File paths, external packages
     # URDF
@@ -45,7 +47,8 @@ def generate_launch_description():
     # Launch configurations
     run_slam   = LaunchConfiguration('run_slam')
     run_nav    = LaunchConfiguration('run_nav')
-    map_file   = LaunchConfiguration('map')
+    # map_file   = LaunchConfiguration('map')
+    map_name   = LaunchConfiguration('map')
 
     # Launch arguments (i.e. "run_slam true" at command line launch)
     run_slam_arg = DeclareLaunchArgument(
@@ -62,9 +65,18 @@ def generate_launch_description():
 
     map_file_arg = DeclareLaunchArgument(
         'map',
-        default_value=default_map,
-        description='Full path to the map yaml file (used when run_slam=false)'
+        # default_value=default_map,
+        # description='Full path to the map yaml file (used when run_slam=false)'
+        default_value='my_map.yaml',
+        description='Name of the map yaml file located in the uiabot_mini_bringup/maps directory'
     )
+
+    # Build full map path at runtime: <share>/<pkg>/maps/<map_name>
+    map_file = PathJoinSubstitution([
+        bringup_dir,
+        'maps',
+        map_name
+    ])
 
     # Teleop to Serial Node (custom)
     tts = Node(
@@ -74,13 +86,6 @@ def generate_launch_description():
         parameters=[{'serial_timeout': 0.2,
                      'read_feedback_hz': 100.0,
                      'cmd_vel_send_delay': 0.0}])
-    
-    # Wheel Joint State Publisher Node (custom)
-    wjsp = Node(
-        package='uiabot_mini',
-        executable='wheel_joint_state_publisher',
-        name='wheel_joint_state_publisher',
-        parameters=[{'joint_state_update_hz': 30.0}])
 
     # Robot State Publisher Node (built-in)
     rsp = Node(
@@ -106,15 +111,6 @@ def generate_launch_description():
         name='bno055',
         output='screen',
         parameters=[bno055_params],
-    )
-
-    # Include odometry launch (custom)
-    we_odom = Node(
-        package='uiabot_mini',
-        executable='wheel_encoder_odometry',
-        name='wheel_encoder_odometry',
-        output='screen',
-        parameters=[{'odom_update_hz': 30.0}]
     )
 
     # EKF Node from robot_localization (built-in)
@@ -188,9 +184,7 @@ def generate_launch_description():
 
         # Core robot nodes
         tts,
-        wjsp,
         rsp,
-        # we_odom,
         ekf_node,
 
         # Sensors

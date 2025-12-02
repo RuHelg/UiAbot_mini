@@ -6,6 +6,7 @@ package_name = 'uiabot_mini_bringup'
 
 launch_files = glob.glob(os.path.join('launch', '*'))
 config_files = glob.glob(os.path.join('config', '*'))
+map_files = glob.glob(os.path.join('maps', '*'))
 
 setup(
     name=package_name,
@@ -16,6 +17,7 @@ setup(
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), launch_files),
         (os.path.join('share', package_name, 'config'), config_files),
+        (os.path.join('share', package_name, 'maps'), map_files),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

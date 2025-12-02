@@ -19,9 +19,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'wheel_joint_state_publisher = uiabot_mini.wheel_joint_state_publisher:main',
             'teleop_to_serial = uiabot_mini.teleop_to_serial:main',
-            'wheel_encoder_odometry = uiabot_mini.wheel_encoder_odometry:main',
         ],
     },
 )
