@@ -2,7 +2,7 @@ from setuptools import setup
 import os
 from glob import glob
 
-package_name = 'xbox_wsl'
+package_name = 'gazebo_test'
 
 setup(
     name=package_name,
@@ -23,9 +23,9 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='stiank',
-    maintainer_email='stiank@todo.todo',
-    description='Xbox controller driver for WSL2 + ROS2',
+    maintainer='group-x',
+    maintainer_email='group-x@uia.no',
+    description='Gazebo test package for UIA bot mini robot',
     license='Apache License 2.0',
     tests_require=['pytest'],
     entry_points={
