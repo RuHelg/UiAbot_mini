@@ -3,6 +3,10 @@
 
   <!-- ========= Base ========= -->
   <link name="base_link">
+    <!-- <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+    </inertial> -->
     <visual>
       <geometry>
         <mesh filename="package://uiabot_mini_description/meshes/base_link.STL"/>
@@ -12,10 +16,20 @@
         <color rgba="0.6 0.6 0.6 1.0"/>
       </material>
     </visual>
+    <collision>
+      <geometry>
+        <box size="0.15 0.12 0.06"/>
+      </geometry>
+      <origin xyz="0 0 0.05" rpy="0 0 0"/>
+    </collision>
   </link>
  
   <!-- ========= Left Wheel ========= -->
   <link name="wheel_l_link">
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+    </inertial>
     <visual>
       <geometry>
         <mesh filename="package://uiabot_mini_description/meshes/wheel.STL"/>
@@ -25,17 +39,27 @@
         <color rgba="0.2 0.2 0.2 1"/>
       </material>
     </visual>
+    <collision>
+      <geometry>
+        <cylinder radius="0.03" length="0.02"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </collision>
   </link>
 
   <joint name="wheel_l_joint" type="continuous">
     <parent link="base_link"/>
     <child link="wheel_l_link"/>
-    <origin xyz="0.00060024 0.09875 0.0339981720062555" rpy="-1.5707963267949 0 0"/>
+    <origin xyz="0.006 0.09875 0.034" rpy="-1.5707963267949 0 0"/>
     <axis xyz="0 0 1"/>
   </joint>
 
   <!-- ========= Right Wheel ========= -->
   <link name="wheel_r_link">
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+    </inertial>
     <visual>
       <geometry>
         <mesh filename="package://uiabot_mini_description/meshes/wheel.STL"/>
@@ -45,17 +69,28 @@
         <color rgba="0.2 0.2 0.2 1"/>
       </material>
     </visual>
+    <collision>
+      <geometry>
+        <cylinder radius="0.03" length="0.02"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </collision>
   </link>
 
   <joint name="wheel_r_joint" type="continuous">
     <parent link="base_link"/>
     <child link="wheel_r_link"/>
-    <origin xyz="0.00060024 -0.09875  0.0339981720062555 " rpy="-1.5707963267949 0 0"/>
+    <origin xyz="0.006 -0.09875  0.034 " rpy="-1.5707963267949 0 0"/>
     <axis xyz="0 0 1"/>
   </joint>
 
   <!-- ========= IMU (BNO055) ========= -->
-  <link name="bno055"/>
+  <link name="bno055">
+    <inertial>
+      <mass value="0.001"/>
+      <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
+    </inertial>
+  </link>
 
   <joint name="imu_fixed_joint" type="fixed">
     <parent link="base_link"/>
@@ -64,12 +99,53 @@
   </joint>
 
   <!-- ========= LIDAR (RPLidar) ========= -->
-  <link name="lidar_link"/>
+  <link name="lidar_link">
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <cylinder radius="0.03" length="0.04"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0.0 0.0 0.0 1.0"/>
+      </material>
+    </visual>
+  </link>
 
   <joint name="lidar_fixed_joint" type="fixed">
     <parent link="base_link"/>
     <child link="lidar_link"/>
-    <origin xyz="0 0 0.15" rpy="0 0 3.14159265358979"/>
+    <origin xyz="-0.037 0 0.213" rpy="0 0 3.14159265358979"/>
+  </joint>
+
+  <!-- ========= Caster Wheel ========= -->
+  <link name="caster_link">
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <sphere radius="0.019"/>
+      </geometry>
+      <material name="green">
+        <color rgba="0.5 0.5 0.5 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <sphere radius="0.019"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </collision>
+  </link>
+
+  <joint name="caster_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="caster_link"/>
+    <origin xyz="-0.0865 0 0.02235" rpy="0 0 0"/>
   </joint>
 
 </robot>

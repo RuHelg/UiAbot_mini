@@ -9,11 +9,11 @@ slam_toolbox:
     debug_logging: false           # If true, enables additional debug logging output.
 
     # SLAM Parameters
-    mode: localization                  # Operating mode: "mapping" builds/updates a map, "localization" loads+localizes to an existing map.
+    mode: mapping                  # Operating mode: "mapping" builds/updates a map, "localization" loads+localizes to an existing map.
     enable_interactive_mode: true  # If true, allows interactive tools/commands (e.g., pausing, adjusting parameters).
     resolution: 0.05               # Map resolution in meters per cell.
     max_laser_range: 12.0          # Maximum laser range to consider (meters); measurements beyond ignored.
-    use_sim_time: false            # If true, use /clock (for simulation); false uses wall time.
+    # use_sim_time: false            # If true, use /clock (for simulation); false uses wall time.
     
     # Time and Update Parameters
     map_update_interval: 1.0       # Seconds between saving/updating the map on disk or internal map updates.

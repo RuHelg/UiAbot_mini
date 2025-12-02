@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="uiabot_mini_wrapper">
+  <!-- Use $(find ...) to resolve package paths dynamically -->
+  <xacro:include filename="$(find uiabot_mini_description)/urdf/uiabot_mini.urdf" />
+  <xacro:include filename="uiabot_mini_gazebo.urdf" />
+</robot>
