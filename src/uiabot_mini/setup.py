@@ -19,7 +19,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'teleop_to_serial = uiabot_mini.teleop_to_serial:main',
+            'serial_communication = uiabot_mini.serial_communication:main',
         ],
     },
 )

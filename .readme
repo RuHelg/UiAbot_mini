@@ -42,6 +42,14 @@ ros2 launch uiabot_mini_bringup bringup.launch.py run_nav:=true
 
 
 
+# Start / Stop the LiDAR motor (sllidar must be running)
+# Stop the motor
+ros2 service call /stop_motor std_srvs/srv/Empty {}
+
+# Start the motor
+ros2 service call /start_motor std_srvs/srv/Empty {}
+
+
 
 ############# KILLKILL #######################
 # 1) See what ROS2/python processes are running
