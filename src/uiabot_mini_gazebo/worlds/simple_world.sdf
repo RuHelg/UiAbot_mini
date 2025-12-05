@@ -1,6 +1,6 @@
-rosdep install --from-paths src --ignore-src -r -y<?xml version="1.0" ?>
+<?xml version="1.0" ?>
 <sdf version="1.8">
-  <world name="simple_world">
+<world name="simple_world">
     
     <!-- Physics -->
     <physics name="1ms" type="ignored">
