@@ -23,8 +23,8 @@ class SerialCommunication(Node):
         # Serial communication parameters
         self.declare_parameter('serial_port', '/dev/ttyUSB1') # Linux, run "dmesg | grep -i usb"
         self.declare_parameter('baudrate', 115200)            # Common baudrate for serial communication
-        self.declare_parameter('serial_timeout', 0.02)        # Timeout for serial read operations in seconds
-        self.declare_parameter('read_feedback_hz', 10.0)      # read_wheel_feedback rate
+        self.declare_parameter('serial_timeout', 0.2)         # Timeout for serial read operations in seconds
+        self.declare_parameter('read_feedback_hz', 100.0)     # read_wheel_feedback rate
         self.declare_parameter('cmd_vel_send_delay', 0.0)     # Delay after sending cmd_vel data in seconds
 
         # Joint state publisher parameters

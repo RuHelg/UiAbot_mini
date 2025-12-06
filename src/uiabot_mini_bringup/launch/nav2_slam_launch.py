@@ -4,6 +4,12 @@ from ament_index_python.packages import get_package_share_directory
 import os
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument
+from launch.conditions import IfCondition
+from launch.substitutions import AndSubstitution, NotSubstitution
+from launch.substitutions import PathJoinSubstitution
+
 
 def generate_launch_description():
 
@@ -15,6 +21,7 @@ def generate_launch_description():
     bno055_params = os.path.join(config_dir, 'bno055_params_i2c.yaml') # Path to BNO055 params file
     ekf_config    = os.path.join(config_dir, 'ekf.yaml')               # Path to ekf config file
     slam_params   = os.path.join(config_dir, 'slam_params.yaml')       # Path to SLAM params file
+    nav2_params   = os.path.join(config_dir, 'nav2_params.yaml')       # Path to Nav2 params file
     
 
     # File paths, external packages
@@ -88,6 +95,22 @@ def generate_launch_description():
         }.items(),
     )
 
+    # Nav2 – SLAM
+    nav2_slam = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory('nav2_bringup'),
+                'launch',
+                'navigation_launch.py'
+            )
+        ),
+        launch_arguments={
+            'params_file': nav2_params,
+            'use_sim_time': 'false',
+            'autostart': 'true',
+        }.items(),
+    )
+
     return LaunchDescription([
         # Core robot nodes
         sc,
@@ -98,6 +121,7 @@ def generate_launch_description():
         sllidar_launch,
         bno055_node,
 
-        # SLAM
+        # SLAM and Nav2
         slam_launch,
+        nav2_slam,
     ])

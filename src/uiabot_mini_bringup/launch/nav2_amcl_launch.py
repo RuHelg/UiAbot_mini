@@ -4,6 +4,10 @@ from ament_index_python.packages import get_package_share_directory
 import os
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import PathJoinSubstitution
+
 
 def generate_launch_description():
 
@@ -14,7 +18,7 @@ def generate_launch_description():
     # File paths, internal to uiabot_mini_bringup package
     bno055_params = os.path.join(config_dir, 'bno055_params_i2c.yaml') # Path to BNO055 params file
     ekf_config    = os.path.join(config_dir, 'ekf.yaml')               # Path to ekf config file
-    slam_params   = os.path.join(config_dir, 'slam_params.yaml')       # Path to SLAM params file
+    nav2_params   = os.path.join(config_dir, 'nav2_params.yaml')       # Path to Nav2 params file
     
 
     # File paths, external packages
@@ -24,13 +28,28 @@ def generate_launch_description():
         'urdf',
         'uiabot_mini.urdf')
 
-
     # SLLIDAR (from sllidar_ros2 package)
     sllidar_launch_file = os.path.join(
         get_package_share_directory('sllidar_ros2'),
         'launch',
         'sllidar_a1_launch.py'
     )
+
+    # Launch configurations
+    map_name   = LaunchConfiguration('map')
+
+    map_file_arg = DeclareLaunchArgument(
+        'map',
+        default_value='my_map.yaml',
+        description='Name of the map yaml file located in the uiabot_mini_bringup/maps directory'
+    )
+
+    # Build full map path at runtime: <share>/<pkg>/maps/<map_name>
+    map_file = PathJoinSubstitution([
+        bringup_dir,
+        'maps',
+        map_name
+    ])
 
     # Serial Communication Node (custom)
     sc = Node(
@@ -73,22 +92,29 @@ def generate_launch_description():
         parameters=[ekf_config],
         output='screen',
     )
-
-    # SLAM Toolbox Node (built-in)
-    slam_launch = IncludeLaunchDescription(
+    
+    # Nav2 - AMCL
+    nav2_amcl = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
-                get_package_share_directory('slam_toolbox'),
+                get_package_share_directory('nav2_bringup'),
                 'launch',
-                'online_async_launch.py'
+                'bringup_launch.py'
             )
         ),
         launch_arguments={
-            'slam_params_file': slam_params,
+            'map': map_file,
+            'params_file': nav2_params,
+            'use_sim_time': 'false',
+            'autostart': 'true',
         }.items(),
     )
+    
 
     return LaunchDescription([
+        # Launch arguments
+        map_file_arg,
+
         # Core robot nodes
         sc,
         rsp,
@@ -98,6 +124,6 @@ def generate_launch_description():
         sllidar_launch,
         bno055_node,
 
-        # SLAM
-        slam_launch,
+        # Nav2
+        nav2_amcl,
     ])

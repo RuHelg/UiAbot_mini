@@ -7,16 +7,6 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 def generate_launch_description():
 
-    # File paths to uiabot_mini_bringup package
-    bringup_dir   = get_package_share_directory('uiabot_mini_bringup') # Path to bringup package
-    config_dir    = os.path.join(bringup_dir, 'config')                # Path to config directory
-
-    # File paths, internal to uiabot_mini_bringup package
-    bno055_params = os.path.join(config_dir, 'bno055_params_i2c.yaml') # Path to BNO055 params file
-    ekf_config    = os.path.join(config_dir, 'ekf.yaml')               # Path to ekf config file
-    slam_params   = os.path.join(config_dir, 'slam_params.yaml')       # Path to SLAM params file
-    
-
     # File paths, external packages
     # URDF
     urdf_path = os.path.join(
@@ -56,48 +46,11 @@ def generate_launch_description():
         }.items(),
     )
 
-    # BNO055 IMU Node (built-in)
-    bno055_node = Node(
-        package='bno055',
-        executable='bno055',
-        name='bno055',
-        output='screen',
-        parameters=[bno055_params],
-    )
-
-    # EKF Node from robot_localization (built-in)
-    ekf_node = Node(
-        package='robot_localization',
-        executable='ekf_node',
-        name='ekf_filter_node',
-        parameters=[ekf_config],
-        output='screen',
-    )
-
-    # SLAM Toolbox Node (built-in)
-    slam_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory('slam_toolbox'),
-                'launch',
-                'online_async_launch.py'
-            )
-        ),
-        launch_arguments={
-            'slam_params_file': slam_params,
-        }.items(),
-    )
-
     return LaunchDescription([
         # Core robot nodes
         sc,
         rsp,
-        ekf_node,
 
         # Sensors
         sllidar_launch,
-        bno055_node,
-
-        # SLAM
-        slam_launch,
     ])

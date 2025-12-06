@@ -14,7 +14,6 @@ def generate_launch_description():
     # File paths, internal to uiabot_mini_bringup package
     bno055_params = os.path.join(config_dir, 'bno055_params_i2c.yaml') # Path to BNO055 params file
     ekf_config    = os.path.join(config_dir, 'ekf.yaml')               # Path to ekf config file
-    slam_params   = os.path.join(config_dir, 'slam_params.yaml')       # Path to SLAM params file
     
 
     # File paths, external packages
@@ -74,19 +73,6 @@ def generate_launch_description():
         output='screen',
     )
 
-    # SLAM Toolbox Node (built-in)
-    slam_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory('slam_toolbox'),
-                'launch',
-                'online_async_launch.py'
-            )
-        ),
-        launch_arguments={
-            'slam_params_file': slam_params,
-        }.items(),
-    )
 
     return LaunchDescription([
         # Core robot nodes
@@ -97,7 +83,4 @@ def generate_launch_description():
         # Sensors
         sllidar_launch,
         bno055_node,
-
-        # SLAM
-        slam_launch,
     ])
