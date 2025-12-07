@@ -29,3 +29,6 @@ Thumbs.db
 
 # Other packages
 sllidar_ros2/
+
+# Ignore specific files
+*.zone.identifier
