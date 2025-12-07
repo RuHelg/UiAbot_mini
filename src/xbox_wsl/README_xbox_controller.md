@@ -13,6 +13,7 @@ WSL2's kernel lacks joystick drivers, so we use:
 
 ```bash
 # Terminal 1: Start Xbox controller (all-in-one: xboxdrv + joy + teleop)
+source install/setup.bash &&
 ./src/xbox_wsl/scripts/start_xbox_teleop.sh
 
 # Terminal 2: Launch your robot

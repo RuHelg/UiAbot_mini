@@ -94,6 +94,25 @@ else
     exit 1
 fi
 
+# Start Twist -> TwistStamped relay so controller receives stamped messages
+echo "6. Starting twist_relay..."
+if [ -x "$WS_ROOT/install/xbox_wsl/bin/twist_relay" ]; then
+    "$WS_ROOT/install/xbox_wsl/bin/twist_relay" &
+    RELAY_PID=$!
+else
+    ros2 run xbox_wsl twist_relay &
+    RELAY_PID=$!
+fi
+sleep 1
+
+if ps -p $RELAY_PID > /dev/null; then
+    echo "   ✓ Relay started (PID: $RELAY_PID)"
+else
+    echo "   ✗ Relay failed to start"
+    kill $JOY_PID $TELEOP_PID $XBOXDRV_PID 2>/dev/null
+    exit 1
+fi
+
 echo ""
 echo "========================================="
 echo "Xbox Controller Ready!"

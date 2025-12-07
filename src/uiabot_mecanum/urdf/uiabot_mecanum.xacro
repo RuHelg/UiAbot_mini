@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="uiabot_mini_wrapper">
+    <!-- <xacro:include filename="test.xacro.urdf" /> -->
+    <xacro:include filename="uiabot_mecanum.xacro.urdf" />
+    <xacro:include filename="uiabot_mecanum_gazebo.urdf" />
+</robot>
+
+
+
+
+

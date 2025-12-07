@@ -30,6 +30,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'twist_relay = xbox_wsl.twist_relay:main',
         ],
     },
 )
