@@ -91,6 +91,19 @@ def generate_launch_description():
         executable='spawner',
         arguments=['joint_state_broadcaster'],
     )
+    #Need twist stamper to add timestamps to cmd_vel messages
+    twist_stamper = Node(
+        package='twist_stamper',
+        executable='twist_stamper',
+        name='twist_stamper',
+        remappings=[
+            ('/cmd_vel_in', '/cmd_vel'),                    # Subscribe to /cmd_vel_smoothed
+            ('/cmd_vel_out', '/cmd_vel_stamped'),                    # Publish stamped to /cmd_vel_stamped
+        ],
+        parameters=[{'use_sim_time': True}],
+        output='screen'
+    )
+
 
     mecanum_drive_controller_spawner = Node(
         package='controller_manager',
@@ -202,4 +215,5 @@ def generate_launch_description():
         slam_launch,
         nav2_launch,
         rviz_node,
+        twist_stamper,
     ])

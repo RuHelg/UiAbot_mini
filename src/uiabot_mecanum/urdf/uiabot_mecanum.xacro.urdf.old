@@ -1,0 +1,108 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Shared wheel defaults -->
+  <xacro:property name="wheel_mass" value="0.5"/>
+  <xacro:property name="wheel_radius" value="0.03"/>   <!-- meters -->
+  <xacro:property name="wheel_ixx" value="1e-10"/>
+  <xacro:property name="wheel_iyy" value="1e-10"/>
+  <xacro:property name="wheel_izz" value="1e-10"/>
+  <xacro:property name="wheel_width" value="0.04"/>     <!-- meters -->
+  <xacro:property name="wheel_rgba" value="0.2 0.2 0.2 1.0"/>
+ 
+  <link name="base_link">
+    <!-- <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+    </inertial> -->
+    <visual>
+      <geometry>
+        <mesh filename="package://uiabot_mini_description/meshes/base_link.STL"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="light_gray">
+        <color rgba="0.6 0.6 0.6 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.15 0.12 0.06"/>
+      </geometry>
+      <origin xyz="0 0 0.05" rpy="0 0 0"/>
+    </collision>
+  </link>
+
+  <!-- Mecanum Wheel Macro -->
+  <xacro:macro name="mecanum_wheel" params="name mesh_file collision_rpy='${-pi/2} 0 0' collision_origin='0 0 0'">
+    <link name="${name}">
+      <inertial>
+        <mass value="${wheel_mass}"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="${wheel_ixx}" ixy="0.0" ixz="0.0" iyy="${wheel_iyy}" iyz="0.0" izz="${wheel_izz}"/>
+      </inertial>
+
+      <visual>
+        <geometry>
+          <mesh filename="${mesh_file}"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <material name="${name}_material">
+          <color rgba="${wheel_rgba}"/>
+        </material>
+      </visual>
+
+      <!-- Use collision_rpy here so the cylinder axis aligns correctly -->
+      <collision>
+        <origin xyz="${collision_origin}" rpy="${collision_rpy}"/>
+        <geometry>
+          <sphere radius="${wheel_radius}"/>
+        </geometry>
+      </collision>
+    </link>
+  </xacro:macro>
+
+  <!-- Front Left Wheel -->
+  <xacro:mecanum_wheel 
+    name="front_left_wheel" 
+    mesh_file="package://uiabot_mecanum/meshes/Mecanum Wheel Left.STL"/>
+  <joint name="front_left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="front_left_wheel"/>
+    <origin xyz="0.006 0.09875 ${wheel_radius}" rpy="${-pi/2} 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <!-- Front Right Wheel -->
+  <xacro:mecanum_wheel 
+    name="front_right_wheel" 
+    mesh_file="package://uiabot_mecanum/meshes/Mecanum Wheel Right.STL"/>
+  <joint name="front_right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="front_right_wheel"/>
+    <origin xyz="0.006 -0.09875 ${wheel_radius}" rpy="${-pi/2} 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <!-- Rear Left Wheel -->
+  <xacro:mecanum_wheel 
+    name="rear_left_wheel" 
+    mesh_file="package://uiabot_mecanum/meshes/Mecanum Wheel Left.STL"/>
+  <joint name="rear_left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="rear_left_wheel"/>
+    <origin xyz="-0.125 0.09875 ${wheel_radius}" rpy="${-pi/2} 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <!-- Rear Right Wheel -->
+  <xacro:mecanum_wheel 
+    name="rear_right_wheel" 
+    mesh_file="package://uiabot_mecanum/meshes/Mecanum Wheel Right.STL"/>
+  <joint name="rear_right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="rear_right_wheel"/>
+    <origin xyz="-0.125 -0.09875 ${wheel_radius}" rpy="${-pi/2} 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+</robot>

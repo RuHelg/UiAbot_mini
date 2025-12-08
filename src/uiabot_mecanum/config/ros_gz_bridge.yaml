@@ -26,7 +26,7 @@
   lazy: false
 
 # Velocity commands from ROS 2 to Gazebo
-- ros_topic_name: "mecanum_drive_controller/cmd_vel"
+- ros_topic_name: "mecanum_drive_controller/cmd_vel_stamped"
   gz_topic_name: "mecanum_drive_controller/cmd_vel"
   ros_type_name: "geometry_msgs/msg/TwistStamped"
   gz_type_name: "gz.msgs.Twist"
