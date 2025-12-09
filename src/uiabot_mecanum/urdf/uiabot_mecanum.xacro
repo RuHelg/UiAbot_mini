@@ -7,7 +7,7 @@
     <xacro:include filename="wheel_link.xacro"/>
     
     <xacro:include filename="mecanum_wheels.xacro.urdf" />
-    <xacro:include filename="bno055_lidar.xacro.urdf" />
+    <xacro:include filename="bno055_imu.xacro.urdf" />
     <xacro:include filename="rplidar.xacro.urdf" />
 
 

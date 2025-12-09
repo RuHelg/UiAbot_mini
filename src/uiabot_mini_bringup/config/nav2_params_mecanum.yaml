@@ -37,7 +37,7 @@ amcl:
     recovery_alpha_fast: 0.1
     recovery_alpha_slow: 0.001
     resample_interval: 1
-    robot_model_type: "nav2_amcl::DifferentialMotionModel"
+    robot_model_type: "nav2_amcl::OmniMotionModel"
     save_pose_rate: 0.5
     sigma_hit: 0.2
     tf_broadcast: true
@@ -69,7 +69,7 @@ controller_server:
   ros__parameters:
     controller_frequency: 20.0
     min_x_velocity_threshold: 0.001
-    min_y_velocity_threshold: 0.5
+    min_y_velocity_threshold: 0.001
     min_theta_velocity_threshold: 0.001
     progress_checker_plugins: ["progress_checker"] # progress_checker_plugin: "progress_checker" For Humble and older
     goal_checker_plugins: ["goal_checker"]
@@ -85,23 +85,45 @@ controller_server:
       yaw_goal_tolerance: 0.25
       stateful: True
     FollowPath:
-      plugin: nav2_graceful_controller::GracefulController
-      transform_tolerance: 0.1
-      min_lookahead: 0.25
-      max_lookahead: 1.0
-      initial_rotation: true
-      initial_rotation_threshold: 0.75
-      prefer_final_rotation: true
-      allow_backward: True
-      k_phi: 2.0
-      k_delta: 1.0
-      beta: 0.4
-      lambda: 2.0
-      v_linear_min: 0.05
-      v_linear_max: 0.3
-      v_angular_max: 2.0
-      v_angular_min_in_place: 0.25
-      slowdown_radius: 0.5
+      plugin: "dwb_core::DWBLocalPlanner"
+      debug_trajectory_details: True
+      min_vel_x: -0.05
+      min_vel_y: -0.35
+      max_vel_x: 0.05
+      max_vel_y: 0.35
+      max_vel_theta: 1.0
+      min_speed_xy: -0.35
+      max_speed_xy: 0.35
+      min_speed_theta: -1.0
+      acc_lim_x: 2.5
+      acc_lim_y: 2.5
+      acc_lim_theta: 3.2
+      decel_lim_x: -2.5
+      decel_lim_y: -2.5
+      decel_lim_theta: -3.2
+      vx_samples: 20
+      vy_samples: 5
+      vtheta_samples: 20
+      sim_time: 1.0
+      linear_granularity: 0.05
+      angular_granularity: 0.025
+      transform_tolerance: 0.2
+      xy_goal_tolerance: 0.25
+      trans_stopped_velocity: 0.25
+      short_circuit_trajectory_evaluation: True
+      limit_vel_cmd_in_traj: False
+      stateful: True
+      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
+      BaseObstacle.scale: 0.02
+      PathAlign.scale: 20.0
+      GoalAlign.scale: 16.0
+      PathAlign.forward_point_distance: 0.1
+      GoalAlign.forward_point_distance: 0.1
+      PathDist.scale: 32.0
+      GoalDist.scale: 24.0
+      RotateToGoal.scale: 32.0
+      RotateToGoal.slowing_factor: 5.0
+      RotateToGoal.lookahead_time: -1.0
 
     
     general_goal_checker:
@@ -258,10 +280,10 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [0.26, 0.0, 1.0]
-    min_velocity: [-0.26, 0.0, -1.0]
-    max_accel: [2.5, 0.0, 3.2]
-    max_decel: [-2.5, 0.0, -3.2]
+    max_velocity: [0.36, 0.36, 1.0]   # allow lateral velocity
+    min_velocity: [-0.36, -0.36, -1.0]
+    max_accel: [2.5, 2.5, 3.2]
+    max_decel: [-2.5, -2.5, -3.2]
     odom_topic: "odometry/filtered"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
@@ -302,7 +324,7 @@ collision_monitor:
       enabled: True
       polygon_pub_topic: "velocity_polygon_stop"
       velocity_polygons: ["rotation", "translation_forward", "translation_backward", "stopped"]
-      holonomic: false
+      holonomic: true
       rotation:
         points: "[[120e-3, 115e-3], [-150e-3, 115e-3], [-150e-3, -115e-3], [120e-3, -115e-3]]"
         linear_min: 0.0

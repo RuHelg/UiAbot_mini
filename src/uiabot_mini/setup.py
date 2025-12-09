@@ -20,6 +20,7 @@ setup(
     entry_points={
         'console_scripts': [
             'serial_communication = uiabot_mini.serial_communication:main',
+            'serial_communication_mecanum = uiabot_mini.serial_communication_mecanum:main',
         ],
     },
 )

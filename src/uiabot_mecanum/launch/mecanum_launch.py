@@ -25,6 +25,8 @@ def generate_launch_description():
     description_pkg = get_package_share_directory('uiabot_mecanum')
     bringup_pkg = get_package_share_directory('uiabot_mini_bringup')
     
+
+    
     # Set GZ_SIM_RESOURCE_PATH for model://uiabot_mini_description/meshes
     description_share_parent = os.path.dirname(description_pkg)
 
@@ -43,6 +45,10 @@ def generate_launch_description():
     xacro_file = os.path.join(gazebo_pkg, 'urdf', 'uiabot_mecanum.xacro')
     urdf_output = os.path.join(tempfile.gettempdir(), 'uiabot_mecanum_merged.urdf')
     bridge_config = os.path.join(gazebo_pkg, 'config', 'ros_gz_bridge.yaml')
+    nav2_param = os.path.join(bringup_pkg, 'config', 'nav2_params_mecanum.yaml')
+    slam_param = os.path.join(bringup_pkg, 'config', 'slam_params.yaml')
+    ekf_config = os.path.join(bringup_pkg, 'config', 'ekf.yaml')
+    
 
     # Run xacro to generate URDF
     try:
@@ -162,7 +168,7 @@ def generate_launch_description():
             os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
         ),
         launch_arguments={
-            'slam_params_file': os.path.join(bringup_pkg, 'config', 'slam_params.yaml'),
+            'slam_params_file': slam_param,
             'use_sim_time': 'true'
         }.items(),
         condition=IfCondition(run_slam)
@@ -173,7 +179,7 @@ def generate_launch_description():
             os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'navigation_launch.py')
         ),
         launch_arguments={
-            'params_file': os.path.join(bringup_pkg, 'config', 'nav2_params.yaml'),
+            'params_file': nav2_param,
             'use_sim_time': 'true'
         }.items(),
         condition=IfCondition(run_nav)
@@ -185,7 +191,7 @@ def generate_launch_description():
         name='ekf_filter_node',
         output='screen',
         parameters=[
-            os.path.join(bringup_pkg, 'config', 'ekf.yaml'),
+            ekf_config,
             {'use_sim_time': True}
         ],
     )
