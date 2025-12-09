@@ -27,5 +27,4 @@
     <origin xyz="${lidar_x} ${lidar_y} ${lidar_z + wheel_radius}" rpy="0 0 ${pi}"/>
   </joint>
   
-
 </robot>

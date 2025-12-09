@@ -1,7 +1,14 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <!-- Instantiate four wheels using the common wheel link macro -->
-
+  <xacro:property name="wheel_ixx" value="1e-6"/>
+  <xacro:property name="wheel_ixy" value="0"/>
+  <xacro:property name="wheel_ixz" value="0"/>
+  <xacro:property name="wheel_iyy" value="1e-6"/>
+  <xacro:property name="wheel_iyz" value="0"/>
+  <xacro:property name="wheel_izz" value="1e-6"/>
+  <xacro:property name="wheel_mass" value="0.5"/>
+  
 <xacro:base_link
   name="base_link"
   link_mesh="package://uiabot_mecanum/meshes/base_link_mecanum.STL"

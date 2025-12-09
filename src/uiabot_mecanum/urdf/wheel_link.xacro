@@ -18,14 +18,14 @@
         <geometry>
           <mesh filename="${link_mesh}"/>
         </geometry>
-        <material name="front_left_wheel_material">
+        <material name="purple">
           <color rgba="0.5 0.0 0.5 1.0"/>
         </material>
       </visual>
       <inertial>
-        <mass value="0.5"/>
-        <inertia ixx="1e-6" ixy="0.0" ixz="0.0" 
-                 iyy="1e-6" iyz="0.0" izz="1e-6"/>
+        <mass value="${wheel_mass}"/>
+        <inertia ixx="${wheel_ixx}" ixy="${wheel_ixy}" ixz="${wheel_ixz}" 
+                 iyy="${wheel_iyy}" iyz="${wheel_iyz}" izz="${wheel_izz}"/>
       </inertial>
     </link>
   </xacro:macro>

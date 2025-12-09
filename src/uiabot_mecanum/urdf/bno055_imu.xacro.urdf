@@ -4,10 +4,11 @@
   <xacro:property name="imu_x" value="-35.25e-3"/>
   <xacro:property name="imu_y" value="-58.75e-3"/>
   <xacro:property name="imu_z" value="76.35e-3"/>
+  <xacro:property name="imu_mass" value="0.001"/>
 
   <link name="bno055">
     <inertial>
-      <mass value="0.001"/>
+      <mass value="${imu_mass}"/>
       <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
     </inertial>
     <visual>
