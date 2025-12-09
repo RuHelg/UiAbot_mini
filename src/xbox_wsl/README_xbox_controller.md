@@ -1,6 +1,22 @@
+## AI-Generated Code Notice
+
+This package (`xbox_wsl`) was generated entirely with the assistance of AI-based code generation tools. As a result, the current maintainers do **not** claim original authorship of the underlying source code or its design.
+
+The package has been reviewed, adapted, and tested for use within the UiAbot-mini project, but large parts of the implementation may be derived from patterns or examples present in the AI models’ training data.
+
+If you recognize any part of this code as originating from your own work (e.g. a tutorial, blog post, open-source project, or other material):
+
+- Please open an issue in this repository, or  
+- Contact the maintainers (see the contact information in this repository)
+
+so that proper credit can be given, or if appropriate, so that the relevant material can be replaced or removed.
+
+Use this package at your own discretion.
+
+
 # Xbox Controller Setup for WSL2 + ROS2
 
-⚠️ **See [XBOX_CONTROLLER_SETUP.md](XBOX_CONTROLLER_SETUP.md) for the complete, tested setup guide.**
+**See [XBOX_CONTROLLER_SETUP.md](XBOX_CONTROLLER_SETUP.md) for the complete, tested setup guide.**
 
 ## Quick Summary
 
