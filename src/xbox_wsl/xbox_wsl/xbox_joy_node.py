@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-"""
-Xbox Controller Joy Node for WSL2
-Reads from /dev/input/event0 and publishes sensor_msgs/Joy messages
-Works around WSL2's lack of joydev kernel module
-"""
-
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Joy
@@ -13,20 +6,29 @@ import sys
 import time
 
 class XboxJoyNode(Node):
+    """
+    Xbox Controller Joy Node for WSL2
+    Reads from /dev/input/event0 and publishes sensor_msgs/Joy messages
+    Works around WSL2's lack of joydev kernel module
+    """
+
     def __init__(self):
         super().__init__('xbox_joy_node')
         
         # Parameters
         self.declare_parameter('device', '/dev/input/event0')
         self.declare_parameter('autorepeat_rate', 20.0)  # Hz
+        
         # List of axis indices to invert (e.g. [0] to invert left-stick X)
         # Default: invert left-stick Y (axis index 1) so forward is positive
         self.declare_parameter('axis_invert', [1])
         
         device_path = self.get_parameter('device').value
         rate = self.get_parameter('autorepeat_rate').value
-        # remember path for reconnects
+        
+        # Remember path for reconnects
         self.device_path = device_path
+        
         # Read invert list (ensure ints)
         inv = self.get_parameter('axis_invert').value
         try:
@@ -40,7 +42,6 @@ class XboxJoyNode(Node):
             self.get_logger().info(f'Opened device: {self.device.name} at {device_path}')
         except Exception as e:
             self.get_logger().error(f'Failed to open {device_path}: {e}')
-            # don't exit here; try reconnecting in publish loop
             self.device = None
         
         # Publisher
