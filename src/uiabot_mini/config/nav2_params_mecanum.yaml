@@ -186,8 +186,8 @@ local_costmap:
 global_costmap:
   global_costmap:
     ros__parameters:
-      update_frequency: 1.0
-      publish_frequency: 1.0
+      update_frequency: 2.0
+      publish_frequency: 2.0
       global_frame: map
       robot_base_frame: base_link
       use_sim_time: False
@@ -234,13 +234,13 @@ behavior_server:
     costmap_topic: local_costmap/costmap_raw
     footprint_topic: local_costmap/published_footprint
     cycle_frequency: 10.0
-    behavior_plugins: ["backup", "spin", "drive_on_heading", "wait"]
+    behavior_plugins: ["backup", "drive_on_heading", "spin", "wait"]
     backup:
       plugin: "nav2_behaviors::BackUp"
       simulate_ahead_time: 2.0
-      backup_dist: 0.3
-      backup_speed: 0.1
-      time_allowance: 10.0
+      backup_dist: 0.75
+      backup_speed: 0.25
+      time_allowance: 5.0
     spin:
       plugin: "nav2_behaviors::Spin"
       simulate_ahead_time: 2.0
@@ -332,14 +332,14 @@ collision_monitor:
         theta_min: -1.0
         theta_max: 1.0
       translation_forward:
-        points: "[[200e-3, 115e-3], [-150e-3, 115e-3], [-150e-3, -115e-3], [200e-3, -115e-3]]"
+        points: "[[150e-3, 115e-3], [-150e-3, 115e-3], [-150e-3, -115e-3], [150e-3, -115e-3]]"
         linear_min: 0.0
-        linear_max: 0.3
+        linear_max: 0.36
         theta_min: -1.0
         theta_max: 1.0
       translation_backward:
         points: "[[102e-3, 115e-3], [-150e-3, 115e-3], [-150e-3, -115e-3], [102e-3, -115e-3]]"
-        linear_min: -0.3
+        linear_min: -0.36
         linear_max: 0.0
         theta_min: -1.0
         theta_max: 1.0
@@ -348,8 +348,8 @@ collision_monitor:
       # is not covered by any of the other sub-polygons
       stopped:
         points: "[[42e-3, 110e-3], [-120e-3, 110e-3], [-120e-3, -110e-3], [42e-3, -110e-3]]"
-        linear_min: -0.3
-        linear_max: 0.3
+        linear_min: -0.36
+        linear_max: 0.36
         theta_min: -1.0
         theta_max: 1.0
     
