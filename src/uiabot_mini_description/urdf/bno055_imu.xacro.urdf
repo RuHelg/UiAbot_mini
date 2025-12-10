@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- ========= IMU (BNO055) ========= -->
+  <xacro:property name="imu_x" value="-35.25e-3"/>
+  <xacro:property name="imu_y" value="-58.75e-3"/>
+  <xacro:property name="imu_z" value="76.35e-3"/>
+  <xacro:property name="imu_mass" value="0.001"/>
+
+  <link name="bno055">
+    <inertial>
+      <mass value="${imu_mass}"/>
+      <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
+    </inertial>
+    <visual>
+      <geometry>
+         <mesh filename="package://uiabot_mini_description/meshes/bno055_imu.STL"/>
+      </geometry>
+      <origin xyz="${-imu_x} ${-imu_y} ${-imu_z}" rpy="0 0 0"/>
+      <material name="blue">
+        <color rgba="0.0 0.0 1.0 1.0"/>
+      </material>
+    </visual> 
+  </link>
+
+  <joint name="imu_fixed_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="bno055"/>
+    <origin xyz="${imu_x} ${imu_y} ${imu_z + wheel_radius}" rpy="0 0 0"/>
+  </joint>
+
+</robot>

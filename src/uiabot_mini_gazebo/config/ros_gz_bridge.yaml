@@ -1,0 +1,42 @@
+# Bridge configuration for ros_gz_bridge
+# Maps topics between ROS 2 and Gazebo
+
+# LIDAR configuration
+- ros_topic_name: "scan"
+  gz_topic_name: "scan"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "gz.msgs.LaserScan"
+  direction: GZ_TO_ROS
+  lazy: false
+
+# IMU configuration
+- ros_topic_name: "bno055/imu"
+  gz_topic_name: "bno055/imu"
+  ros_type_name: "sensor_msgs/msg/Imu"
+  gz_type_name: "gz.msgs.IMU"
+  direction: GZ_TO_ROS
+  lazy: false
+
+# Clock synchronization
+- ros_topic_name: "clock"
+  gz_topic_name: "clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "gz.msgs.Clock"
+  direction: GZ_TO_ROS
+  lazy: false
+
+# Velocity commands from ROS 2 to Gazebo
+- ros_topic_name: "mecanum_drive_controller/cmd_vel_stamped"
+  gz_topic_name: "mecanum_drive_controller/cmd_vel"
+  ros_type_name: "geometry_msgs/msg/TwistStamped"
+  gz_type_name: "gz.msgs.Twist"
+  direction: ROS_TO_GZ
+  lazy: false
+
+# # Wheel encoder odometry from Gazebo to ROS 2
+# - ros_topic_name: "wheel_encoder_odometry"
+#   gz_topic_name: "/wheel_encoder_odometry"
+#   ros_type_name: "nav_msgs/msg/Odometry"
+#   gz_type_name: "gz.msgs.Odometry"
+#   direction: GZ_TO_ROS
+#   lazy: false

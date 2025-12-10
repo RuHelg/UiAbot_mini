@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="uiabot_mini_wrapper">
+
+    <xacro:property name="wheel_radius" value="0.03"/> 
+
+    <xacro:include filename="base_link.xacro" />
+    <xacro:include filename="wheel_link.xacro"/>
+    
+    <xacro:include filename="mecanum_wheels.xacro.urdf" />
+    <xacro:include filename="bno055_imu.xacro.urdf" />
+    <xacro:include filename="rplidar.xacro.urdf" />
+
+    <xacro:include filename="uiabot_mecanum_gazebo.urdf" />
+</robot>

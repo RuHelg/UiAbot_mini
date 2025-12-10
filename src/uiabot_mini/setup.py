@@ -1,6 +1,12 @@
 from setuptools import find_packages, setup
+import glob # for file searching
+import os   # for file path manipulation
 
 package_name = 'uiabot_mini'
+
+launch_files = glob.glob(os.path.join('launch', '*'))
+config_files = glob.glob(os.path.join('config', '*'))
+map_files = glob.glob(os.path.join('maps', '*'))
 
 setup(
     name=package_name,
@@ -9,6 +15,9 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name, 'launch'), launch_files),
+        (os.path.join('share', package_name, 'config'), config_files),
+        (os.path.join('share', package_name, 'maps'), map_files),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
