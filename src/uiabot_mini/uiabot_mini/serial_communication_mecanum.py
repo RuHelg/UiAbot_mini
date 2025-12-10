@@ -138,7 +138,7 @@ class SerialCommunication(Node):
     def send_zero_values(self):
         """Send zero values for velocity and rotation before shutdown."""
         try:
-            zero_buff = struct.pack('=BBBff', 36, 36, 0, 0.0, 0.0)
+            zero_buff = struct.pack('=BBBfff', 36, 36, 0, 0.0, 0.0, 0.0)
             self.ser.write(zero_buff)
             sleep(0.01)
         
@@ -270,7 +270,7 @@ class SerialCommunication(Node):
             return
         try:
             reset = 1
-            buf = struct.pack('=BBBff', 36, 36, reset, 0.0, 0.0)
+            buf = struct.pack('=BBBfff', 36, 36, reset, 0.0, 0.0, 0.0)
             self.ser.write(buf)
             self.get_logger().info("Sent odometry reset pulse to ESP32.")
         except serial.SerialException as e:

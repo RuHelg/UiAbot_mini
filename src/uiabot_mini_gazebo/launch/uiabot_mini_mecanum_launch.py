@@ -14,18 +14,28 @@ from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
+    # Package paths
+    ros_gz_sim_pkg = get_package_share_directory('ros_gz_sim')
+    gazebo_pkg = get_package_share_directory('uiabot_mini_gazebo')
+    bringup_dir   = get_package_share_directory('uiabot_mini') # Path to bringup package
+    config_dir    = os.path.join(bringup_dir, 'config')                # Path to config directory
+    gazebo_config_dir = os.path.join(gazebo_pkg, 'config')          # Path to gazebo config directory
+    description_pkg = get_package_share_directory('uiabot_mini_description')
+    # File paths, internal to uiabot_mini_bringup package
+    bno055_params = os.path.join(config_dir, 'bno055_params_i2c.yaml') # Path to BNO055 params file
+    ekf_config    = os.path.join(config_dir, 'ekf.yaml')               # Path to ekf config file
+    slam_params   = os.path.join(config_dir, 'slam_params.yaml')       # Path to SLAM params file
+    nav2_params   = os.path.join(config_dir, 'nav2_params_differential.yaml')       # Path to Nav2 params file
+
+    gz_launch_path = os.path.join(ros_gz_sim_pkg, 'launch', 'gz_sim.launch.py')
+    world_file = os.path.join(uiabot_mini_gazebo_pkg, 'worlds', 'simple_world.sdf')
+    xacro_file = os.path.join(uiabot_mini_gazebo_pkg, 'urdf', 'uiabot_mini.xacro')
+    urdf_output = os.path.join(tempfile.gettempdir(), 'uiabot_mini_merged.urdf')
+
     # Launch arguments
     use_rviz = LaunchConfiguration('rviz')
     run_slam = LaunchConfiguration('run_slam')
     run_nav = LaunchConfiguration('run_nav')
-    
-    # Package paths
-    ros_gz_sim_pkg = get_package_share_directory('ros_gz_sim')
-    gazebo_pkg = get_package_share_directory('uiabot_mecanum')
-    description_pkg = get_package_share_directory('uiabot_mecanum')
-    bringup_pkg = get_package_share_directory('uiabot_mini_bringup')
-    
-
     
     # Set GZ_SIM_RESOURCE_PATH for model://uiabot_mini_description/meshes
     description_share_parent = os.path.dirname(description_pkg)
@@ -44,10 +54,11 @@ def generate_launch_description():
     world_file = os.path.join(gazebo_pkg, 'worlds', 'simple_world.sdf')
     xacro_file = os.path.join(gazebo_pkg, 'urdf', 'uiabot_mecanum.xacro')
     urdf_output = os.path.join(tempfile.gettempdir(), 'uiabot_mecanum_merged.urdf')
-    bridge_config = os.path.join(gazebo_pkg, 'config', 'ros_gz_bridge.yaml')
+    bridge_config = os.path.join(gazebo_pkg, 'config', 'ros_gz_mecanum_bridge.yaml')
     nav2_param = os.path.join(bringup_pkg, 'config', 'nav2_params_mecanum.yaml')
     slam_param = os.path.join(bringup_pkg, 'config', 'slam_params.yaml')
     ekf_config = os.path.join(bringup_pkg, 'config', 'ekf.yaml')
+    controller_params = os.path.join(gazebo_pkg, 'config', 'mecanum_drive_controller.yaml')
     
 
     # Run xacro to generate URDF
@@ -76,9 +87,6 @@ def generate_launch_description():
         output='screen',
         parameters=[{'robot_description': urdf_content, 'use_sim_time': True}]
     )
-
-    # Controller params file (use your package config)
-    controller_params = os.path.join(gazebo_pkg, 'config', 'mecanum_drive_controller.yaml')
 
     spawn_robot = Node(
         package='ros_gz_sim',
