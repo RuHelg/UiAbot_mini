@@ -1,7 +1,9 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="uiabot_mini_wrapper">
 
-    <xacro:property name="wheel_radius" value="0.034"/> 
+    <xacro:property name="wheel_radius" value="0.034"/>          <!--Wheel radius-->
+    <xacro:property name="wheel_separation" value="197.5e-3"/>    <!--Distance between left and right wheels-->
+    <xacro:property name="wheel_front_y" value="38.1e-3"/>       <!--Front wheel y position-->
 
     <xacro:include filename="base_link.xacro" />
     <xacro:include filename="wheel_link.xacro"/>
@@ -26,7 +28,7 @@
     </visual>
     <collision>
       <geometry>
-        <sphere radius="0.019"/>
+        <sphere radius="${wheel_radius/2}"/>
       </geometry>
       <origin xyz="0 0 0" rpy="0 0 0"/>
     </collision>
@@ -35,6 +37,6 @@
   <joint name="caster_joint" type="fixed">
     <parent link="base_link"/>
     <child link="caster_link"/>
-    <origin xyz="-0.0865 0 0.02235" rpy="0 0 0"/>
+    <origin xyz="-49e-3 0 ${wheel_radius/2}" rpy="0 0 0"/>
   </joint>
 </robot>

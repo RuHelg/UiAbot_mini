@@ -26,6 +26,7 @@ def generate_launch_description():
     ekf_config    = os.path.join(config_dir, 'ekf.yaml')               # Path to ekf config file
     slam_params   = os.path.join(config_dir, 'slam_params.yaml')       # Path to SLAM params file
     nav2_params   = os.path.join(config_dir, 'nav2_params_differential.yaml')       # Path to Nav2 params file
+    bridge_config = os.path.join(gazebo_config_dir, 'ros_gz_bridge.yaml') # Path to ros_gz_bridge config file
 
     gz_launch_path = os.path.join(ros_gz_sim_pkg, 'launch', 'gz_sim.launch.py')
     world_file = os.path.join(gazebo_pkg, 'worlds', 'simple_world.sdf')
@@ -108,14 +109,7 @@ def generate_launch_description():
         package='ros_gz_bridge',
         executable='parameter_bridge',
         name='ros_gz_bridge',
-        arguments=[
-            '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',
-            '/wheel_encoder_odometry@nav_msgs/msg/Odometry[gz.msgs.Odometry',
-            '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
-            '/bno055/imu@sensor_msgs/msg/Imu[gz.msgs.IMU',
-            '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
-            '/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model',
-        ],
+        arguments=['--ros-args', '-p', f'config_file:={bridge_config}'],
         parameters=[{'use_sim_time': True}],
         output='screen'
     )

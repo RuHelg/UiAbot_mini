@@ -1,7 +1,10 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="uiabot_mini_wrapper">
 
-    <xacro:property name="wheel_radius" value="0.03"/> 
+    <xacro:property name="wheel_radius" value="30e-3"/>          <!--Wheel radius-->
+    <xacro:property name="wheel_separation" value="205e-3"/>     <!--Distance between left and right wheels-->
+    <xacro:property name="wheel_base" value="75e-3"/>            <!--Distance between front and back wheels-->
+    <xacro:property name="wheel_front_y" value="38.1e-3"/>       <!--Front wheel y position-->
 
     <xacro:include filename="base_link.xacro" />
     <xacro:include filename="wheel_link.xacro"/>

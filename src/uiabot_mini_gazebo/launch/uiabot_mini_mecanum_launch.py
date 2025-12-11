@@ -17,7 +17,7 @@ def generate_launch_description():
     gazebo_pkg = get_package_share_directory('uiabot_mini_gazebo')
     bringup_pkg   = get_package_share_directory('uiabot_mini') # Path to bringup package
     description_pkg = get_package_share_directory('uiabot_mini_description')
-    
+
     # Directory paths
     config_dir    = os.path.join(bringup_pkg, 'config')                # Path to config directory
     gazebo_config_dir = os.path.join(gazebo_pkg, 'config')          # Path to gazebo config directory
@@ -27,29 +27,28 @@ def generate_launch_description():
     ekf_config    = os.path.join(config_dir, 'ekf.yaml')               # Path to ekf config file
     slam_params   = os.path.join(config_dir, 'slam_params.yaml')       # Path to SLAM params file
     nav2_params   = os.path.join(config_dir, 'nav2_params_mecanum.yaml')       # Path to Nav2 params file
-    controller_params = os.path.join(gazebo_config_dir, 'mecanum_drive_controller.yaml') # Path to controller params file
-    bridge_config = os.path.join(gazebo_config_dir, 'ros_gz_mecanum_bridge.yaml') # Path to ros_gz_bridge config file
+    bridge_config = os.path.join(gazebo_config_dir, 'ros_gz_bridge.yaml') # Path to ros_gz_bridge config file
 
     gz_launch_path = os.path.join(ros_gz_sim_pkg, 'launch', 'gz_sim.launch.py')
     world_file = os.path.join(gazebo_pkg, 'worlds', 'simple_world.sdf')
     xacro_file = os.path.join(gazebo_pkg, 'urdf', 'uiabot_gazebo_mecanum.urdf')
-    
+
     urdf_output = os.path.join(tempfile.gettempdir(), 'uiabot_gazebo_merged.urdf')
 
     # Launch arguments
     use_rviz = LaunchConfiguration('rviz')
     run_slam = LaunchConfiguration('run_slam')
     run_nav = LaunchConfiguration('run_nav')
-    
+
     # Set GZ_SIM_RESOURCE_PATH for model://uiabot_mini_description/meshes
     description_share_parent = os.path.dirname(description_pkg)
-    
+
     # Build resource path once
     gz_resource_path = os.pathsep.join(filter(None, [
         os.environ.get('GZ_SIM_RESOURCE_PATH', ''),
         description_share_parent,
     ]))
-    
+
     # Set up environment for xacro to find includes from other packages
     env = os.environ.copy()
     env['ROS_PACKAGE_PATH'] = os.pathsep.join(filter(None, [
@@ -94,53 +93,10 @@ def generate_launch_description():
         output='screen'
     )
 
-    # Load controllers in INACTIVE state (won't try to activate until you're ready)
-    joint_state_broadcaster_spawner = Node(
-        package='controller_manager',
-        executable='spawner',
-        arguments=['joint_state_broadcaster'],
-    )
-    #Need twist stamper to add timestamps to cmd_vel messages
-    twist_stamper = Node(
-        package='twist_stamper',
-        executable='twist_stamper',
-        name='twist_stamper',
-        remappings=[
-            ('/cmd_vel_in', '/cmd_vel'),                        # Subscribe to /cmd_vel
-            ('/cmd_vel_out', '/cmd_vel_stamped'),               # Publish stamped to /cmd_vel_stamped
-        ],
-        parameters=[{'use_sim_time': True}],
-        output='screen'
-    )
-
-
-    mecanum_drive_controller_spawner = Node(
-        package='controller_manager',
-        executable='spawner',
-        arguments=[
-            'mecanum_drive_controller',
-            '--param-file',
-            controller_params,
-            '--controller-ros-args',
-            '-r /mecanum_drive_controller/odometry:=/wheel_encoder_odometry',
-            '--controller-ros-args',
-            '-r /mecanum_drive_controller/reference:=/cmd_vel_stamped',
-        ],
-        output='screen',
-    )
-
-    controllers_delayed = TimerAction(
-        period=3.0,  # Wait for robot to spawn first
-        actions=[
-            joint_state_broadcaster_spawner,
-            mecanum_drive_controller_spawner,
-        ]
-    )
-
     gazebo_include = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(gz_launch_path),
         launch_arguments={
-            'gz_args': f'-r {world_file}',
+            'gz_args': world_file,
             'on_exit_shutdown': 'True'
         }.items(),
     )
@@ -150,7 +106,6 @@ def generate_launch_description():
         actions=[gazebo_include]
     )
     
-    # ROS-Gazebo bridge using YAML configuration
     bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
@@ -215,11 +170,9 @@ def generate_launch_description():
         gazebo,
         robot_state_publisher,
         spawn_robot_delayed,
-        controllers_delayed,
         bridge,
         ekf_node,
         slam_launch,
         nav2_launch,
         rviz_node,
-        twist_stamper,
     ])
