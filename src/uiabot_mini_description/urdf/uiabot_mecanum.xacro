@@ -9,6 +9,4 @@
     <xacro:include filename="mecanum_wheels.xacro.urdf" />
     <xacro:include filename="bno055_imu.xacro.urdf" />
     <xacro:include filename="rplidar.xacro.urdf" />
-
-    <xacro:include filename="uiabot_mecanum_gazebo.urdf" />
 </robot>

@@ -1,36 +1,40 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import SetEnvironmentVariable, IncludeLaunchDescription, DeclareLaunchArgument, TimerAction, ExecuteProcess, RegisterEventHandler
-from launch.event_handlers import OnProcessExit
+from launch.actions import SetEnvironmentVariable, IncludeLaunchDescription, DeclareLaunchArgument, TimerAction
 from launch.conditions import IfCondition
-from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import Command, FindExecutable, LaunchConfiguration
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 import os
 import subprocess
 import tempfile
 
-from launch_ros.actions import Node
-from launch_ros.substitutions import FindPackageShare
+
 
 def generate_launch_description():
     # Package paths
     ros_gz_sim_pkg = get_package_share_directory('ros_gz_sim')
     gazebo_pkg = get_package_share_directory('uiabot_mini_gazebo')
-    bringup_dir   = get_package_share_directory('uiabot_mini') # Path to bringup package
-    config_dir    = os.path.join(bringup_dir, 'config')                # Path to config directory
-    gazebo_config_dir = os.path.join(gazebo_pkg, 'config')          # Path to gazebo config directory
+    bringup_pkg   = get_package_share_directory('uiabot_mini') # Path to bringup package
     description_pkg = get_package_share_directory('uiabot_mini_description')
+    
+    # Directory paths
+    config_dir    = os.path.join(bringup_pkg, 'config')                # Path to config directory
+    gazebo_config_dir = os.path.join(gazebo_pkg, 'config')          # Path to gazebo config directory
+
     # File paths, internal to uiabot_mini_bringup package
     bno055_params = os.path.join(config_dir, 'bno055_params_i2c.yaml') # Path to BNO055 params file
     ekf_config    = os.path.join(config_dir, 'ekf.yaml')               # Path to ekf config file
     slam_params   = os.path.join(config_dir, 'slam_params.yaml')       # Path to SLAM params file
-    nav2_params   = os.path.join(config_dir, 'nav2_params_differential.yaml')       # Path to Nav2 params file
+    nav2_params   = os.path.join(config_dir, 'nav2_params_mecanum.yaml')       # Path to Nav2 params file
+    controller_params = os.path.join(gazebo_config_dir, 'mecanum_drive_controller.yaml') # Path to controller params file
+    bridge_config = os.path.join(gazebo_config_dir, 'ros_gz_mecanum_bridge.yaml') # Path to ros_gz_bridge config file
 
     gz_launch_path = os.path.join(ros_gz_sim_pkg, 'launch', 'gz_sim.launch.py')
-    world_file = os.path.join(uiabot_mini_gazebo_pkg, 'worlds', 'simple_world.sdf')
-    xacro_file = os.path.join(uiabot_mini_gazebo_pkg, 'urdf', 'uiabot_mini.xacro')
-    urdf_output = os.path.join(tempfile.gettempdir(), 'uiabot_mini_merged.urdf')
+    world_file = os.path.join(gazebo_pkg, 'worlds', 'simple_world.sdf')
+    xacro_file = os.path.join(gazebo_pkg, 'urdf', 'uiabot_gazebo_mecanum.urdf')
+    
+    urdf_output = os.path.join(tempfile.gettempdir(), 'uiabot_gazebo_merged.urdf')
 
     # Launch arguments
     use_rviz = LaunchConfiguration('rviz')
@@ -39,39 +43,30 @@ def generate_launch_description():
     
     # Set GZ_SIM_RESOURCE_PATH for model://uiabot_mini_description/meshes
     description_share_parent = os.path.dirname(description_pkg)
-
-
-    gz_resource_path = SetEnvironmentVariable(
-        name='GZ_SIM_RESOURCE_PATH',
-        value=os.pathsep.join(filter(None, [
-            os.environ.get('GZ_SIM_RESOURCE_PATH', ''),
-            description_share_parent,  # For model://uiabot_mini_description/meshes
-        ]))
-    )
-
-    # File paths
-    gz_launch_path = os.path.join(ros_gz_sim_pkg, 'launch', 'gz_sim.launch.py')
-    world_file = os.path.join(gazebo_pkg, 'worlds', 'simple_world.sdf')
-    xacro_file = os.path.join(gazebo_pkg, 'urdf', 'uiabot_mecanum.xacro')
-    urdf_output = os.path.join(tempfile.gettempdir(), 'uiabot_mecanum_merged.urdf')
-    bridge_config = os.path.join(gazebo_pkg, 'config', 'ros_gz_mecanum_bridge.yaml')
-    nav2_param = os.path.join(bringup_pkg, 'config', 'nav2_params_mecanum.yaml')
-    slam_param = os.path.join(bringup_pkg, 'config', 'slam_params.yaml')
-    ekf_config = os.path.join(bringup_pkg, 'config', 'ekf.yaml')
-    controller_params = os.path.join(gazebo_pkg, 'config', 'mecanum_drive_controller.yaml')
     
+    # Build resource path once
+    gz_resource_path = os.pathsep.join(filter(None, [
+        os.environ.get('GZ_SIM_RESOURCE_PATH', ''),
+        description_share_parent,
+    ]))
+    
+    # Set up environment for xacro to find includes from other packages
+    env = os.environ.copy()
+    env['ROS_PACKAGE_PATH'] = os.pathsep.join(filter(None, [
+        os.path.dirname(gazebo_pkg),
+        os.path.dirname(description_pkg),
+        env.get('ROS_PACKAGE_PATH', ''),
+    ]))
+    env['GZ_SIM_RESOURCE_PATH'] = gz_resource_path
 
-    # Run xacro to generate URDF
+    xacro_cmd = ['xacro', xacro_file, '-o', urdf_output]
+
     try:
-        result = subprocess.run(
-            ['xacro', xacro_file, '-o', urdf_output],
-            check=True,
-            capture_output=True,
-            text=True
-        )
+        subprocess.run(xacro_cmd, check=True, capture_output=True, text=True, env=env)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(
             f"xacro generation failed for {xacro_file}\n"
+            f"Command: {' '.join(xacro_cmd)}\n"
             f"Error: {e.stderr}"
         ) from e
 
@@ -111,8 +106,8 @@ def generate_launch_description():
         executable='twist_stamper',
         name='twist_stamper',
         remappings=[
-            ('/cmd_vel_in', '/cmd_vel'),                    # Subscribe to /cmd_vel_smoothed
-            ('/cmd_vel_out', '/cmd_vel_stamped'),                    # Publish stamped to /cmd_vel_stamped
+            ('/cmd_vel_in', '/cmd_vel'),                        # Subscribe to /cmd_vel
+            ('/cmd_vel_out', '/cmd_vel_stamped'),               # Publish stamped to /cmd_vel_stamped
         ],
         parameters=[{'use_sim_time': True}],
         output='screen'
@@ -132,6 +127,14 @@ def generate_launch_description():
             '-r /mecanum_drive_controller/reference:=/cmd_vel_stamped',
         ],
         output='screen',
+    )
+
+    controllers_delayed = TimerAction(
+        period=3.0,  # Wait for robot to spawn first
+        actions=[
+            joint_state_broadcaster_spawner,
+            mecanum_drive_controller_spawner,
+        ]
     )
 
     gazebo_include = IncludeLaunchDescription(
@@ -176,7 +179,7 @@ def generate_launch_description():
             os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
         ),
         launch_arguments={
-            'slam_params_file': slam_param,
+            'slam_params_file': slam_params,
             'use_sim_time': 'true'
         }.items(),
         condition=IfCondition(run_slam)
@@ -187,7 +190,7 @@ def generate_launch_description():
             os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'navigation_launch.py')
         ),
         launch_arguments={
-            'params_file': nav2_param,
+            'params_file': nav2_params,
             'use_sim_time': 'true'
         }.items(),
         condition=IfCondition(run_nav)
@@ -205,25 +208,14 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        gz_resource_path,
-        RegisterEventHandler(
-            event_handler=OnProcessExit(
-                target_action=spawn_robot,
-                on_exit=[joint_state_broadcaster_spawner],
-            )
-        ),
-        RegisterEventHandler(
-            event_handler=OnProcessExit(
-                target_action=joint_state_broadcaster_spawner,
-                on_exit=[mecanum_drive_controller_spawner],
-            )
-        ),
+        SetEnvironmentVariable(name='GZ_SIM_RESOURCE_PATH', value=gz_resource_path),
         DeclareLaunchArgument('rviz', default_value='false', description='Start RViz'),
         DeclareLaunchArgument('run_slam', default_value='false', description='Start SLAM Toolbox'),
         DeclareLaunchArgument('run_nav', default_value='false', description='Start Nav2'),
         gazebo,
         robot_state_publisher,
         spawn_robot_delayed,
+        controllers_delayed,
         bridge,
         ekf_node,
         slam_launch,

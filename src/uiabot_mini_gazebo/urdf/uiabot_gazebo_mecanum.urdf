@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schemas/model/1.0" >
-
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schemas/model/1.0" name="uiabot_mini_gazebo_mecanum" >
+<xacro:include filename="$(find uiabot_mini_description)/urdf/uiabot_mecanum.xacro" />
   <!-- Mecanum Wheel Friction Models -->
   <gazebo reference="front_left_wheel">
     <material>

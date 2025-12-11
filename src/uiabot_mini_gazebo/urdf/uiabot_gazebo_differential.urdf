@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="uiabot_mini_gazebo_differential">>
+<xacro:include filename="$(find uiabot_mini_description)/urdf/uiabot_differential.xacro" />
   <!-- Wheel friction -->
-  <gazebo reference="wheel_l_link">
+  <gazebo reference="front_left_wheel">
     <mu1>1.0</mu1>
     <mu2>1.0</mu2>
     <kp>1000000000.0</kp>
@@ -10,7 +11,7 @@
     <maxVel>10.0</maxVel>
     <fdir1>0 1 0</fdir1>
   </gazebo>
-  <gazebo reference="wheel_r_link">
+  <gazebo reference="front_right_wheel">
     <mu1>1.0</mu1>
     <mu2>1.0</mu2>
     <kp>1000000000.0</kp>
@@ -39,8 +40,8 @@
   <!-- Differential drive controller -->
   <gazebo>
     <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
-      <left_joint>wheel_l_joint</left_joint>
-      <right_joint>wheel_r_joint</right_joint>
+      <left_joint>front_left_wheel_joint</left_joint>
+      <right_joint>front_right_wheel_joint</right_joint>
       <wheel_separation>0.1975</wheel_separation>
       <wheel_radius>0.034</wheel_radius>
       <odom_publish_frequency>30</odom_publish_frequency>
