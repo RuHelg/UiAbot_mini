@@ -1,0 +1,8 @@
+/**:
+  ros__parameters:
+    require_enable_button: false
+    axis_linear:  { x: 1, y: 0 }        # left stick vertical (1) -> forward/back, left stick horizontal (0) -> strafe
+    axis_angular: { yaw: 3 }            # right stick horizontal (3) -> yaw/rotation (adjust index if needed)
+    scale_linear:  { x: 0.35, y: 0.35 } # same speed forward/back and strafe
+    scale_angular: { yaw: 3.14 }
+    deadzone: 0.1
