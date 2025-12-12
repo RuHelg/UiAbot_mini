@@ -15,15 +15,15 @@ WHEEL_RADIUS  = 0.03       # meters (rad/s -> m/s)
 SEND_RATE_HZ  = 20.0
 
 # Command parameters
-LINEAR_VEL_X  = 0.2        # m/s
+LINEAR_VEL_X  = 0.15        # m/s
 ANGULAR_VEL_Z = 0.0        # rad/s
 DURATION      = 10.0
 
 # PIDN parameters per motor
-P_FL, I_FL, D_FL, N_FL = 250.0, 50.0, 2.0, 40.0
-P_FR, I_FR, D_FR, N_FR = 272.0, 30.0, 2.0, 40.0
-P_BL, I_BL, D_BL, N_BL = 250.0, 50.0, 2.0, 40.0
-P_BR, I_BR, D_BR, N_BR = 272.0, 30.0, 2.0, 40.0
+P_FL, I_FL, D_FL, N_FL = 600.0, 65.0, 2.0, 40.0
+P_FR, I_FR, D_FR, N_FR = 600.0, 65.0, 2.0, 40.0
+P_BL, I_BL, D_BL, N_BL = 600.0, 65.0, 2.0, 40.0
+P_BR, I_BR, D_BR, N_BR = 600.0, 65.0, 2.0, 40.0
 
 # Feedback framing
 HEADER = b"\x24\x24"                 # 0x24 0x24
@@ -208,13 +208,13 @@ def main():
                 m3_vel.append(v3)
                 m4_vel.append(v4)
 
-                print(
-                    f"Feedback (m/s) -> "
-                    f"M1:{v1:.3f} ({w1_rads:.2f} rad/s), "
-                    f"M2:{v2:.3f} ({w2_rads:.2f} rad/s), "
-                    f"M3:{v3:.3f} ({w3_rads:.2f} rad/s), "
-                    f"M4:{v4:.3f} ({w4_rads:.2f} rad/s)"
-                )
+                # print(
+                #     f"Feedback (m/s) -> "
+                #     f"M1:{v1:.3f} ({w1_rads:.2f} rad/s), "
+                #     f"M2:{v2:.3f} ({w2_rads:.2f} rad/s), "
+                #     f"M3:{v3:.3f} ({w3_rads:.2f} rad/s), "
+                #     f"M4:{v4:.3f} ({w4_rads:.2f} rad/s)"
+                # )
 
             elapsed = time.time() - loop_t0
             sleep_time = period - elapsed

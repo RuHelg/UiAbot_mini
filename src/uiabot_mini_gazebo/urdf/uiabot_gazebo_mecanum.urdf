@@ -11,9 +11,11 @@
     <collision>
       <surface>
         <friction>
-          <mu>${wheel_mu}</mu>
-          <mu2>${wheel_mu2}</mu2>
-          <fdir1 gz:expressed_in="base_link">${fdir}</fdir1>
+          <ode>
+            <mu>${wheel_mu}</mu>
+            <mu2>${wheel_mu2}</mu2>
+            <fdir1 gz:expressed_in="base_link">${fdir}</fdir1>
+          </ode>
         </friction>
       </surface>
     </collision>
