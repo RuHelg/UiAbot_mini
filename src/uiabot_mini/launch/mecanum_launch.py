@@ -21,9 +21,9 @@ import tempfile
 def generate_launch_description():
 
     # File paths to uiabot_mini_bringup package
-    bringup_dir   = get_package_share_directory('uiabot_mini_bringup') # Path to bringup package
+    bringup_dir   = get_package_share_directory('uiabot_mini') # Path to bringup package
     config_dir    = os.path.join(bringup_dir, 'config')                # Path to config directory
-    description_pkg = get_package_share_directory('uiabot_mecanum')
+    description_pkg = get_package_share_directory('uiabot_mini_description')
     # File paths, internal to uiabot_mini_bringup package
     bno055_params = os.path.join(config_dir, 'bno055_params_i2c.yaml') # Path to BNO055 params file
     ekf_config    = os.path.join(config_dir, 'ekf.yaml')               # Path to ekf config file

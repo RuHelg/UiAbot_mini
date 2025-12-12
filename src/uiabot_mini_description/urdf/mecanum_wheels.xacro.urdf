@@ -20,7 +20,7 @@
   name="front_left_wheel"
   link_mesh="package://uiabot_mini_description/meshes/mecanum_wheel_left.STL"
   wheel_radius="${wheel_radius}"
-  joint_origin="38.1e-3 102.5e-3 ${wheel_radius}"
+  joint_origin="${wheel_front_y} ${wheel_separation/2} ${wheel_radius}"
   joint_rpy="${-pi/2} 0 0"
   visual_rpy="0 0 0"/>
 
@@ -28,7 +28,7 @@
   name="front_right_wheel"
   link_mesh="package://uiabot_mini_description/meshes/mecanum_wheel_right.STL"
   wheel_radius="${wheel_radius}"
-  joint_origin="38.1e-3 -102.5e-3 ${wheel_radius}"
+  joint_origin="${wheel_front_y} -${wheel_separation/2} ${wheel_radius}"
   joint_rpy="${-pi/2} 0 0"
   visual_rpy="0 0 0"/>
 
@@ -36,7 +36,7 @@
   name="rear_left_wheel"
   link_mesh="package://uiabot_mini_description/meshes/mecanum_wheel_right.STL"
   wheel_radius="${wheel_radius}"
-  joint_origin="-36.4e-3 102.5e-3 ${wheel_radius}"
+  joint_origin="${wheel_front_y-wheel_base} ${wheel_separation/2} ${wheel_radius}"
   joint_rpy="${-pi/2} 0 0"
   visual_rpy="${pi} 0 0"/>
 
@@ -44,7 +44,7 @@
   name="rear_right_wheel"
   link_mesh="package://uiabot_mini_description/meshes/mecanum_wheel_left.STL"
   wheel_radius="${wheel_radius}"
-  joint_origin="-36.4e-3 -102.5e-3 ${wheel_radius}"
+  joint_origin="${wheel_front_y-wheel_base} -${wheel_separation/2} ${wheel_radius}"
   joint_rpy="${-pi/2} 0 0"
   visual_rpy="${pi} 0 0"/>
 

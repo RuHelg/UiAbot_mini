@@ -11,45 +11,60 @@ import tempfile
 
 
 def generate_launch_description():
+    # Package paths
+    ros_gz_sim_pkg = get_package_share_directory('ros_gz_sim')
+    gazebo_pkg = get_package_share_directory('uiabot_mini_gazebo')
+    bringup_pkg   = get_package_share_directory('uiabot_mini') # Path to bringup package
+    description_pkg = get_package_share_directory('uiabot_mini_description')
+    
+    # Directory paths
+    config_dir    = os.path.join(bringup_pkg, 'config')                # Path to config directory
+    gazebo_config_dir = os.path.join(gazebo_pkg, 'config')          # Path to gazebo config directory
+
+    # File paths, internal to uiabot_mini_bringup package
+    bno055_params = os.path.join(config_dir, 'bno055_params_i2c.yaml') # Path to BNO055 params file
+    ekf_config    = os.path.join(config_dir, 'ekf.yaml')               # Path to ekf config file
+    slam_params   = os.path.join(config_dir, 'slam_params.yaml')       # Path to SLAM params file
+    nav2_params   = os.path.join(config_dir, 'nav2_params_differential.yaml')       # Path to Nav2 params file
+    bridge_config = os.path.join(gazebo_config_dir, 'ros_gz_bridge.yaml') # Path to ros_gz_bridge config file
+
+    gz_launch_path = os.path.join(ros_gz_sim_pkg, 'launch', 'gz_sim.launch.py')
+    world_file = os.path.join(gazebo_pkg, 'worlds', 'simple_world.sdf')
+    xacro_file = os.path.join(gazebo_pkg, 'urdf', 'uiabot_gazebo_differential.urdf')
+    
+    urdf_output = os.path.join(tempfile.gettempdir(), 'uiabot_gazebo_merged.urdf')
+
     # Launch arguments
     use_rviz = LaunchConfiguration('rviz')
     run_slam = LaunchConfiguration('run_slam')
     run_nav = LaunchConfiguration('run_nav')
     
-    # Package paths
-    ros_gz_sim_pkg = get_package_share_directory('ros_gz_sim')
-    uiabot_mini_gazebo_pkg = get_package_share_directory('uiabot_mini_gazebo')
-    uiabot_mini_description_pkg = get_package_share_directory('uiabot_mini_description')
-    uiabot_mini_bringup_pkg = get_package_share_directory('uiabot_mini_bringup')
-    
     # Set GZ_SIM_RESOURCE_PATH for model://uiabot_mini_description/meshes
-    description_share_parent = os.path.dirname(uiabot_mini_description_pkg)
+    description_share_parent = os.path.dirname(description_pkg)
     
-    gz_resource_path = SetEnvironmentVariable(
-        name='GZ_SIM_RESOURCE_PATH',
-        value=os.pathsep.join(filter(None, [
-            os.environ.get('GZ_SIM_RESOURCE_PATH', ''),
-            description_share_parent,  # For model://uiabot_mini_description/meshes
-        ]))
-    )
+    # Build resource path once
+    gz_resource_path = os.pathsep.join(filter(None, [
+        os.environ.get('GZ_SIM_RESOURCE_PATH', ''),
+        description_share_parent,
+    ]))
+    
+    # Set up environment for xacro to find includes from other packages
+    env = os.environ.copy()
+    env['ROS_PACKAGE_PATH'] = os.pathsep.join(filter(None, [
+        os.path.dirname(gazebo_pkg),
+        os.path.dirname(description_pkg),
+        env.get('ROS_PACKAGE_PATH', ''),
+    ]))
+    env['GZ_SIM_RESOURCE_PATH'] = gz_resource_path
 
-    # File paths
-    gz_launch_path = os.path.join(ros_gz_sim_pkg, 'launch', 'gz_sim.launch.py')
-    world_file = os.path.join(uiabot_mini_gazebo_pkg, 'worlds', 'simple_world.sdf')
-    xacro_file = os.path.join(uiabot_mini_gazebo_pkg, 'urdf', 'uiabot_mini.xacro')
-    urdf_output = os.path.join(tempfile.gettempdir(), 'uiabot_mini_merged.urdf')
+    xacro_cmd = ['xacro', xacro_file, '-o', urdf_output]
 
-    # Run xacro to generate URDF
     try:
-        result = subprocess.run(
-            ['xacro', xacro_file, '-o', urdf_output],
-            check=True,
-            capture_output=True,
-            text=True
-        )
+        subprocess.run(xacro_cmd, check=True, capture_output=True, text=True, env=env)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(
             f"xacro generation failed for {xacro_file}\n"
+            f"Command: {' '.join(xacro_cmd)}\n"
             f"Error: {e.stderr}"
         ) from e
 
@@ -94,14 +109,7 @@ def generate_launch_description():
         package='ros_gz_bridge',
         executable='parameter_bridge',
         name='ros_gz_bridge',
-        arguments=[
-            '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',
-            '/wheel_encoder_odometry@nav_msgs/msg/Odometry[gz.msgs.Odometry',
-            '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
-            '/bno055/imu@sensor_msgs/msg/Imu[gz.msgs.IMU',
-            '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
-            '/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model',
-        ],
+        arguments=['--ros-args', '-p', f'config_file:={bridge_config}'],
         parameters=[{'use_sim_time': True}],
         output='screen'
     )
@@ -125,7 +133,7 @@ def generate_launch_description():
             os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
         ),
         launch_arguments={
-            'slam_params_file': os.path.join(uiabot_mini_bringup_pkg, 'config', 'slam_params.yaml'),
+            'slam_params_file': slam_params,
             'use_sim_time': 'true'
         }.items(),
         condition=IfCondition(run_slam)
@@ -136,7 +144,7 @@ def generate_launch_description():
             os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'navigation_launch.py')
         ),
         launch_arguments={
-            'params_file': os.path.join(uiabot_mini_bringup_pkg, 'config', 'nav2_params.yaml'),
+            'params_file': nav2_params,
             'use_sim_time': 'true'
         }.items(),
         condition=IfCondition(run_nav)
@@ -148,13 +156,13 @@ def generate_launch_description():
         name='ekf_filter_node',
         output='screen',
         parameters=[
-            os.path.join(uiabot_mini_bringup_pkg, 'config', 'ekf.yaml'),
+            ekf_config,
             {'use_sim_time': True}
         ],
     )
 
     return LaunchDescription([
-        gz_resource_path,
+        SetEnvironmentVariable(name='GZ_SIM_RESOURCE_PATH', value=gz_resource_path),
         DeclareLaunchArgument('rviz', default_value='false', description='Start RViz'),
         DeclareLaunchArgument('run_slam', default_value='false', description='Start SLAM Toolbox'),
         DeclareLaunchArgument('run_nav', default_value='false', description='Start Nav2'),

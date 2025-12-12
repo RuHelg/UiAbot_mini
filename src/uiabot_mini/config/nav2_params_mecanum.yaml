@@ -87,20 +87,20 @@ controller_server:
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
       debug_trajectory_details: True
-      min_vel_x: -0.05
+      min_vel_x: -0.35
       min_vel_y: -0.35
-      max_vel_x: 0.05
+      max_vel_x: 0.35
       max_vel_y: 0.35
       max_vel_theta: 1.0
       min_speed_xy: -0.35
       max_speed_xy: 0.35
       min_speed_theta: -1.0
-      acc_lim_x: 2.5
-      acc_lim_y: 2.5
-      acc_lim_theta: 3.2
-      decel_lim_x: -2.5
-      decel_lim_y: -2.5
-      decel_lim_theta: -3.2
+      acc_lim_x: 1.5
+      acc_lim_y: 1.5
+      acc_lim_theta: 1.0
+      decel_lim_x: -1.5
+      decel_lim_y: -1.5
+      decel_lim_theta: -1.0
       vx_samples: 20
       vy_samples: 5
       vtheta_samples: 20
@@ -186,8 +186,8 @@ local_costmap:
 global_costmap:
   global_costmap:
     ros__parameters:
-      update_frequency: 1.0
-      publish_frequency: 1.0
+      update_frequency: 2.0
+      publish_frequency: 2.0
       global_frame: map
       robot_base_frame: base_link
       use_sim_time: False
@@ -220,7 +220,7 @@ global_costmap:
 
 planner_server:
   ros__parameters:
-    expected_planner_frequency: 10.0
+    expected_planner_frequency: 20.0
     use_sim_time: False
     planner_plugins: ["GridBased"]
     GridBased:
@@ -234,19 +234,19 @@ behavior_server:
     costmap_topic: local_costmap/costmap_raw
     footprint_topic: local_costmap/published_footprint
     cycle_frequency: 10.0
-    behavior_plugins: ["spin", "backup", "drive_on_heading", "wait"]
+    behavior_plugins: ["backup", "drive_on_heading", "spin", "wait"]
+    backup:
+      plugin: "nav2_behaviors::BackUp"
+      simulate_ahead_time: 2.0
+      backup_dist: 0.75
+      backup_speed: 0.25
+      time_allowance: 5.0
     spin:
       plugin: "nav2_behaviors::Spin"
       simulate_ahead_time: 2.0
       max_rotational_vel: 1.0
       min_rotational_vel: 0.1
       rotational_acc_lim: 3.2
-    backup:
-      plugin: "nav2_behaviors::BackUp"
-      simulate_ahead_time: 2.0
-      backup_dist: 0.3
-      backup_speed: 0.1
-      time_allowance: 10.0
     drive_on_heading:
       plugin: "nav2_behaviors::DriveOnHeading"
       simulate_ahead_time: 2.0
@@ -282,8 +282,8 @@ velocity_smoother:
     feedback: "OPEN_LOOP"
     max_velocity: [0.36, 0.36, 1.0]   # allow lateral velocity
     min_velocity: [-0.36, -0.36, -1.0]
-    max_accel: [2.5, 2.5, 3.2]
-    max_decel: [-2.5, -2.5, -3.2]
+    max_accel: [1.5, 1.5, 1.0]
+    max_decel: [-1.5, -1.5, -1.0]
     odom_topic: "odometry/filtered"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
@@ -332,14 +332,14 @@ collision_monitor:
         theta_min: -1.0
         theta_max: 1.0
       translation_forward:
-        points: "[[200e-3, 115e-3], [-150e-3, 115e-3], [-150e-3, -115e-3], [200e-3, -115e-3]]"
+        points: "[[150e-3, 115e-3], [-150e-3, 115e-3], [-150e-3, -115e-3], [150e-3, -115e-3]]"
         linear_min: 0.0
-        linear_max: 0.3
+        linear_max: 0.36
         theta_min: -1.0
         theta_max: 1.0
       translation_backward:
         points: "[[102e-3, 115e-3], [-150e-3, 115e-3], [-150e-3, -115e-3], [102e-3, -115e-3]]"
-        linear_min: -0.3
+        linear_min: -0.36
         linear_max: 0.0
         theta_min: -1.0
         theta_max: 1.0
@@ -348,8 +348,8 @@ collision_monitor:
       # is not covered by any of the other sub-polygons
       stopped:
         points: "[[42e-3, 110e-3], [-120e-3, 110e-3], [-120e-3, -110e-3], [42e-3, -110e-3]]"
-        linear_min: -0.3
-        linear_max: 0.3
+        linear_min: -0.36
+        linear_max: 0.36
         theta_min: -1.0
         theta_max: 1.0
     
