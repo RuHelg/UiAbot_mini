@@ -28,11 +28,11 @@
 
 <xacro:wheel_friction
   link="front_right_wheel"
-  fdir="1 1 0"/>
+  fdir="-1 -1 0"/>
 
 <xacro:wheel_friction
   link="rear_left_wheel"
-  fdir="-1 -1 0"/>
+  fdir="1 1 0"/>
 
 <xacro:wheel_friction
   link="rear_right_wheel"

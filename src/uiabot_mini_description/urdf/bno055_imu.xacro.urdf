@@ -6,6 +6,12 @@
   <xacro:property name="imu_z" value="76.35e-3"/>
   <xacro:property name="imu_mass" value="0.001"/>
 
+  <joint name="imu_fixed_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="bno055"/>
+    <origin xyz="${imu_x} ${imu_y} ${imu_z + wheel_radius}" rpy="0 0 0"/>
+  </joint>
+
   <link name="bno055">
     <inertial>
       <mass value="${imu_mass}"/>
@@ -21,11 +27,5 @@
       </material>
     </visual> 
   </link>
-
-  <joint name="imu_fixed_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="bno055"/>
-    <origin xyz="${imu_x} ${imu_y} ${imu_z + wheel_radius}" rpy="0 0 0"/>
-  </joint>
 
 </robot>

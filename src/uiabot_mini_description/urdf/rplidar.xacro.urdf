@@ -4,27 +4,38 @@
   <xacro:property name="lidar_x" value="0"/>
   <xacro:property name="lidar_y" value="0"/>
   <xacro:property name="lidar_z" value="188.85e-3"/>
-
-  <link name="lidar_link">
-    <inertial>
-      <mass value="0.1"/>
-      <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
-    </inertial>
-    <visual>
-      <geometry>
-         <mesh filename="package://uiabot_mini_description/meshes/rplidar.STL"/>
-      </geometry>
-      <origin xyz="${-lidar_x} ${-lidar_y} ${-lidar_z}" rpy="0 0 ${-pi}"/>
-      <material name="black">
-        <color rgba="0.0 0.0 0.0 1.0"/>
-      </material>
-    </visual>
-  </link>
-
+  <xacro:property name="lidar_rpy" value="0 0 ${-pi}"/>
+  <xacro:property name="lidar_mass" value="0.05"/>
+  
   <joint name="lidar_fixed_joint" type="fixed">
     <parent link="base_link"/>
     <child link="lidar_link"/>
     <origin xyz="${lidar_x} ${lidar_y} ${lidar_z + wheel_radius}" rpy="0 0 ${pi}"/>
-  </joint>
+  </joint>  
+
+  <link name="lidar_link">
+    <visual>
+      <geometry>
+         <mesh filename="package://uiabot_mini_description/meshes/rplidar.STL"/>
+      </geometry>
+      <origin xyz="${-lidar_x} ${-lidar_y} ${-lidar_z}" rpy="${lidar_rpy}"/>
+      <material name="black">
+        <color rgba="0.0 0.0 0.0 1.0"/>
+      </material>
+    </visual>
+    <collision>
+     <geometry>
+      <cylinder radius="0.05" length="0.05"/>
+     </geometry>
+    </collision>
+    <inertial>
+      <mass value="${lidar_mass}"/>
+      <inertia ixx="${(1/12) * lidar_mass * (3 * 0.05*0.05 + 0.05*0.05)}" 
+           ixy="0.0" ixz="0.0" 
+           iyy="${(1/12) * lidar_mass * (3 * 0.05*0.05 + 0.05*0.05)}" 
+           iyz="0.0" 
+           izz="${(1/2) * lidar_mass * 0.05*0.05}"/>
+    </inertial>
+  </link>
   
 </robot>

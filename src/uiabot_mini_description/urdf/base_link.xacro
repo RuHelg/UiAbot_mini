@@ -1,28 +1,27 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <xacro:macro name="base_link" params="name link_mesh wheel_radius joint_origin joint_rpy">
-        <link name="${name}">
-            <inertial>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <mass value="5.0"/>
-            <inertia ixx="1e-10" ixy="0.0" ixz="0.0" iyy="1e-10" iyz="0.0" izz="1e-10"/>
-            </inertial>
-            <visual>
-            <geometry>
-                <mesh filename="${link_mesh}"/>
-            </geometry>
-            <origin xyz="${joint_origin}" rpy="${joint_rpy}"/>
-            <material name="light_gray">
-                <color rgba="0.6 0.6 0.6 1.0"/>
-            </material>
-            </visual>
-            <!-- <collision>
-            <geometry>
-                <box size="0.15 0.12 0.1"/>
-            </geometry>
-            <origin xyz="${joint_origin}" rpy="${joint_rpy}"/>
-            </collision> -->
-        </link>
-    </xacro:macro>
+ <xacro:macro name="base_link" params="name link_mesh wheel_radius joint_origin joint_rpy">
+  <link name="${name}">
+  <inertial>
+   <mass value="5.0"/>
+   <inertia ixx="1e-10" ixy="0.0" ixz="0.0" iyy="1e-10" iyz="0.0" izz="1e-10"/>
+  </inertial>
+  <visual>
+   <origin xyz="0 0 ${wheel_radius}" rpy="0 0 0"/>
+   <geometry>
+    <mesh filename="${link_mesh}"/>
+   </geometry>
+   <material name="light_gray">
+    <color rgba="0.6 0.6 0.6 1.0"/>
+   </material>
+  </visual>
+  <collision>
+   <origin xyz="0 0 ${wheel_radius + 0.105/2}" rpy="0 0 0"/>
+   <geometry>
+    <box size="0.165 0.165 0.105"/>
+   </geometry>
+  </collision>
+  </link>
+ </xacro:macro>
 
 </robot>
