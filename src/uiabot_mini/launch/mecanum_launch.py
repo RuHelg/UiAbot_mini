@@ -53,15 +53,6 @@ def generate_launch_description():
     with open(urdf_output, 'r') as urdf_file_handle:
         urdf_content = urdf_file_handle.read()
 
-
-    # # File paths, external packages
-    # # URDF
-    # urdf_path = os.path.join(
-    #     get_package_share_directory('uiabot_mini_description'),
-    #     'urdf',
-    #     'uiabot_mini.urdf')
-
-
     # SLLIDAR (from sllidar_ros2 package)
     sllidar_launch_file = os.path.join(
         get_package_share_directory('sllidar_ros2'),
@@ -90,8 +81,6 @@ def generate_launch_description():
 
     map_file_arg = DeclareLaunchArgument(
         'map',
-        # default_value=default_map,
-        # description='Full path to the map yaml file (used when run_slam=false)'
         default_value='my_map.yaml',
         description='Name of the map yaml file located in the uiabot_mini_bringup/maps directory'
     )
@@ -200,19 +189,6 @@ def generate_launch_description():
         }.items(),
         condition=IfCondition(AndSubstitution(run_nav, run_slam)),
     )
-
-    # #Need twist stamper to add timestamps to cmd_vel messages
-    # twist_stamper = Node(
-    #     package='twist_stamper',
-    #     executable='twist_stamper',
-    #     name='twist_stamper',
-    #     remappings=[
-    #         ('/cmd_vel_in', '/cmd_vel'),                    # Subscribe to /cmd_vel_smoothed
-    #         ('/cmd_vel_out', '/cmd_vel_stamped'),                    # Publish stamped to /cmd_vel_stamped
-    #     ],
-    #     parameters=[{'use_sim_time': True}],
-    #     output='screen'
-    # )
 
     return LaunchDescription([
         # Launch arguments

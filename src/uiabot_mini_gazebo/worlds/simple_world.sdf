@@ -222,7 +222,7 @@
         <!-- spawn an office chair from Fuel -->
         <include>
         <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Office Chair</uri>
-        <pose>1.5 -1 0 0 0 1.57</pose>
+        <pose>1.5 -1 0 0 0 -1.57</pose>
         </include>
 
         <!-- spawn a table from Fuel -->
