@@ -1,40 +1,38 @@
-# Assignment 1
 from launch import LaunchDescription
 from launch_ros.actions import Node
-# Assignment 2, tts, wjsp
 from ament_index_python.packages import get_package_share_directory
 import os
-# Assignment 2, rplidar, bno055
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-# Assignment 3, slam
 from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
-# Assignment 4, nav2
 from launch.substitutions import AndSubstitution, NotSubstitution
 from launch.substitutions import PathJoinSubstitution
-
 import subprocess
 import tempfile
 
 def generate_launch_description():
 
     # File paths to uiabot_mini_bringup package
-    bringup_dir   = get_package_share_directory('uiabot_mini') # Path to bringup package
-    config_dir    = os.path.join(bringup_dir, 'config')                # Path to config directory
+    bringup_dir     = get_package_share_directory('uiabot_mini') # Path to bringup package
+    config_dir      = os.path.join(bringup_dir, 'config')                # Path to config directory
     description_pkg = get_package_share_directory('uiabot_mini_description')
+
     # File paths, internal to uiabot_mini_bringup package
     bno055_params = os.path.join(config_dir, 'bno055_params_i2c.yaml') # Path to BNO055 params file
     ekf_config    = os.path.join(config_dir, 'ekf.yaml')               # Path to ekf config file
     slam_params   = os.path.join(config_dir, 'slam_params.yaml')       # Path to SLAM params file
     nav2_params   = os.path.join(config_dir, 'nav2_params_mecanum.yaml')       # Path to Nav2 params file
+    xacro_file    = os.path.join(description_pkg, 'urdf', 'uiabot_mecanum.xacro')
+    urdf_output   = os.path.join(tempfile.gettempdir(), 'uiabot_mecanum_merged.urdf')
 
-    xacro_file = os.path.join(description_pkg, 'urdf', 'uiabot_mecanum.xacro')
-    urdf_output = os.path.join(tempfile.gettempdir(), 'uiabot_mecanum_merged.urdf')
-
-
-
+    # External launch file paths
+    sllidar_launch_file = os.path.join(get_package_share_directory('sllidar_ros2'),'launch','sllidar_a1_launch.py')
+    slam_launch_file    = os.path.join(get_package_share_directory('slam_toolbox'),'launch','online_async_launch.py')
+    nav2_amcl_launch    = os.path.join(get_package_share_directory('nav2_bringup'),'launch','bringup_launch.py')
+    nav2_slam_launch    = os.path.join(get_package_share_directory('nav2_bringup'),'launch','navigation_launch.py')
+        
     # Run xacro to generate URDF
     try:
         result = subprocess.run(
@@ -53,17 +51,9 @@ def generate_launch_description():
     with open(urdf_output, 'r') as urdf_file_handle:
         urdf_content = urdf_file_handle.read()
 
-    # SLLIDAR (from sllidar_ros2 package)
-    sllidar_launch_file = os.path.join(
-        get_package_share_directory('sllidar_ros2'),
-        'launch',
-        'sllidar_a1_launch.py'
-    )
-
     # Launch configurations
     run_slam   = LaunchConfiguration('run_slam')
     run_nav    = LaunchConfiguration('run_nav')
-    # map_file   = LaunchConfiguration('map')
     map_name   = LaunchConfiguration('map')
 
     # Launch arguments (i.e. "run_slam true" at command line launch)
@@ -138,13 +128,7 @@ def generate_launch_description():
 
     # SLAM Toolbox Node (built-in)
     slam_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory('slam_toolbox'),
-                'launch',
-                'online_async_launch.py'
-            )
-        ),
+        PythonLaunchDescriptionSource(slam_launch_file),
         launch_arguments={
             'slam_params_file': slam_params,
         }.items(),
@@ -156,14 +140,8 @@ def generate_launch_description():
     # 2. Without localization: use when run_slam=true (SLAM provides map->odom)
     
     # Nav2 – Mode 1: With localization (map_server + AMCL), used when run_slam=false
-    nav2_with_localization = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory('nav2_bringup'),
-                'launch',
-                'bringup_launch.py'
-            )
-        ),
+    nav2_amcl = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(nav2_amcl_launch),
         launch_arguments={
             'map': map_file,
             'params_file': nav2_params,
@@ -174,14 +152,8 @@ def generate_launch_description():
     )
     
     # Nav2 – Mode 2: Without localization (for SLAM mode), used when run_slam=true
-    nav2_without_localization = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory('nav2_bringup'),
-                'launch',
-                'navigation_launch.py'
-            )
-        ),
+    nav2_slam = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(nav2_slam_launch),
         launch_arguments={
             'params_file': nav2_params,
             'use_sim_time': 'false',
@@ -207,6 +179,6 @@ def generate_launch_description():
 
         # SLAM and Nav2
         slam_launch,
-        nav2_with_localization,
-        nav2_without_localization,
+        nav2_amcl,
+        nav2_slam,
     ])

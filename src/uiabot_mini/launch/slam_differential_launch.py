@@ -4,11 +4,6 @@ from ament_index_python.packages import get_package_share_directory
 import os
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
-from launch.actions import DeclareLaunchArgument
-from launch.conditions import IfCondition
-from launch.substitutions import AndSubstitution, NotSubstitution
-from launch.substitutions import PathJoinSubstitution
 import subprocess
 import tempfile
 
@@ -23,15 +18,12 @@ def generate_launch_description():
     bno055_params = os.path.join(config_dir, 'bno055_params_i2c.yaml') # Path to BNO055 params file
     ekf_config    = os.path.join(config_dir, 'ekf.yaml')               # Path to ekf config file
     slam_params   = os.path.join(config_dir, 'slam_params.yaml')       # Path to SLAM params file
-    nav2_params   = os.path.join(config_dir, 'nav2_params.yaml')       # Path to Nav2 params file
     xacro_file    = os.path.join(description_pkg, 'urdf', 'uiabot_differential.xacro')
     urdf_output   = os.path.join(tempfile.gettempdir(), 'uiabot_differential_merged.urdf')
 
     # External launch file paths
     sllidar_launch_file = os.path.join(get_package_share_directory('sllidar_ros2'),'launch','sllidar_a1_launch.py')
     slam_launch_file    = os.path.join(get_package_share_directory('slam_toolbox'),'launch','online_async_launch.py')
-    nav2_amcl_launch    = os.path.join(get_package_share_directory('nav2_bringup'),'launch','bringup_launch.py')
-    nav2_slam_launch    = os.path.join(get_package_share_directory('nav2_bringup'),'launch','navigation_launch.py')
     
     # Run xacro to generate URDF
     try:
@@ -50,37 +42,6 @@ def generate_launch_description():
     # Read the generated URDF
     with open(urdf_output, 'r') as urdf_file_handle:
         urdf_content = urdf_file_handle.read()
-
-    # Launch configurations
-    run_slam   = LaunchConfiguration('run_slam')
-    run_nav    = LaunchConfiguration('run_nav')
-    map_name   = LaunchConfiguration('map')
-
-    # Launch arguments (i.e. "run_slam true" at command line launch)
-    run_slam_arg = DeclareLaunchArgument(
-        'run_slam',
-        default_value='false',
-        description='Run SLAM Toolbox'
-    )
-
-    run_nav_arg = DeclareLaunchArgument(
-        'run_nav',
-        default_value='false',
-        description='Run Nav2'
-    )
-
-    map_file_arg = DeclareLaunchArgument(
-        'map',
-        default_value='my_map.yaml',
-        description='Name of the map yaml file located in the uiabot_mini_bringup/maps directory'
-    )
-
-    # Build full map path at runtime: <share>/<pkg>/maps/<map_name>
-    map_file = PathJoinSubstitution([
-        bringup_dir,
-        'maps',
-        map_name
-    ])
 
     # Serial Communication Node (custom)
     sc = Node(
@@ -132,42 +93,9 @@ def generate_launch_description():
         launch_arguments={
             'slam_params_file': slam_params,
         }.items(),
-        condition=IfCondition(run_slam),
-    )
-
-    # Nav2 - Two modes:
-    # 1. With localization (map_server + AMCL): use when run_slam=false
-    # 2. Without localization: use when run_slam=true (SLAM provides map->odom)
-    
-    # Nav2 – Mode 1: With localization (map_server + AMCL), used when run_slam=false
-    nav2_amcl = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(nav2_amcl_launch),
-        launch_arguments={
-            'map': map_file,
-            'params_file': nav2_params,
-            'use_sim_time': 'false',
-            'autostart': 'true',
-        }.items(),
-        condition=IfCondition(AndSubstitution(run_nav, NotSubstitution(run_slam))),
-    )
-    
-    # Nav2 – Mode 2: Without localization (for SLAM mode), used when run_slam=true
-    nav2_slam = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(nav2_slam_launch),
-        launch_arguments={
-            'params_file': nav2_params,
-            'use_sim_time': 'false',
-            'autostart': 'true',
-        }.items(),
-        condition=IfCondition(AndSubstitution(run_nav, run_slam)),
     )
 
     return LaunchDescription([
-        # Launch arguments
-        run_slam_arg,
-        run_nav_arg,
-        map_file_arg,
-
         # Core robot nodes
         sc,
         rsp,
@@ -177,8 +105,6 @@ def generate_launch_description():
         sllidar_launch,
         bno055_node,
 
-        # SLAM and Nav2
+        # SLAM
         slam_launch,
-        nav2_amcl,
-        nav2_slam,
     ])
